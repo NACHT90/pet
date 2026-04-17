@@ -1,28 +1,25 @@
--- Modül: Jarvis Ana Kontrol Menüsü V3 (Üstün Sürüm)
+-- Modül: Jarvis Ana Kontrol Menüsü V5 (Fuzzer / Sızma Testi Sürümü)
 local oyuncu = game.Players.LocalPlayer
 local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local VirtualUser = game:GetService("VirtualUser")
 local Lighting = game:GetService("Lighting")
-local fare = oyuncu:GetMouse()
 
 local playerGui = oyuncu:WaitForChild("PlayerGui")
 
--- Eski menüyü temizle
 if playerGui:FindFirstChild("JarvisMenu") then
     playerGui.JarvisMenu:Destroy()
 end
 
--- Ana Ekran
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "JarvisMenu"
 screenGui.Parent = playerGui
 
--- Sade ve Modern Arka Plan Çerçevesi (Boyutu uzattık)
+-- Menü boyutunu Fuzzer araçları için biraz daha büyüttük
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 220, 0, 420) 
-frame.Position = UDim2.new(0.8, 0, 0.4, -150) 
-frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25) 
+frame.Size = UDim2.new(0, 240, 0, 580) 
+frame.Position = UDim2.new(0.8, 0, 0.3, -150) 
+frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20) 
 frame.BorderSizePixel = 0 
 frame.Active = true
 frame.Draggable = true
@@ -32,60 +29,56 @@ local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0, 8)
 corner.Parent = frame
 
--- Şık Bir Üst Çizgi (Vurgu)
 local topBar = Instance.new("Frame")
 topBar.Size = UDim2.new(1, 0, 0, 5)
-topBar.BackgroundColor3 = Color3.fromRGB(0, 200, 255) 
+topBar.BackgroundColor3 = Color3.fromRGB(255, 50, 50) -- Fuzzer (Saldırı) sürümü için Kırmızı!
 topBar.BorderSizePixel = 0
 topBar.Parent = frame
 local topCorner = Instance.new("UICorner")
 topCorner.CornerRadius = UDim.new(0, 8)
 topCorner.Parent = topBar
 
--- Menü Başlığı
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 35)
 title.Position = UDim2.new(0, 0, 0, 5)
-title.Text = "JARVIS V3 KONTROL"
+title.Text = "JARVIS V5 [FUZZER]"
 title.BackgroundTransparency = 1
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.Font = Enum.Font.GothamBlack
 title.TextSize = 14
 title.Parent = frame
 
--- Butonları Otomatik Hizalayacak Alan (Modern UI Mantığı)
-local buttonContainer = Instance.new("Frame")
+local buttonContainer = Instance.new("ScrollingFrame")
 buttonContainer.Size = UDim2.new(1, 0, 1, -45)
 buttonContainer.Position = UDim2.new(0, 0, 0, 45)
 buttonContainer.BackgroundTransparency = 1
+buttonContainer.ScrollBarThickness = 4
 buttonContainer.Parent = frame
 
 local listLayout = Instance.new("UIListLayout")
 listLayout.Parent = buttonContainer
 listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-listLayout.Padding = UDim.new(0, 8) -- Butonlar arası boşluk
+listLayout.Padding = UDim.new(0, 6) 
 listLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
--- Buton Oluşturma Fonksiyonu
-local function ButonOlustur(isim)
+-- Yardımcı Fonksiyonlar
+local function ButonOlustur(isim, renk)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.85, 0, 0, 35)
-    btn.Text = isim .. ": KAPALI"
-    btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    btn.Size = UDim2.new(0.9, 0, 0, 32)
+    btn.Text = isim
+    btn.BackgroundColor3 = renk or Color3.fromRGB(40, 40, 40)
     btn.TextColor3 = Color3.fromRGB(200, 200, 200)
     btn.Font = Enum.Font.GothamSemibold
-    btn.TextSize = 12
+    btn.TextSize = 11
     btn.BorderSizePixel = 0
     btn.Parent = buttonContainer
     
     local btnCorner = Instance.new("UICorner")
     btnCorner.CornerRadius = UDim.new(0, 6)
     btnCorner.Parent = btn
-    
     return btn
 end
 
--- Buton Görünüm Güncelleme
 local function ButonGuncelle(btn, durum, isim)
     if durum then
         btn.Text = isim .. ": AÇIK"
@@ -93,153 +86,142 @@ local function ButonGuncelle(btn, durum, isim)
         btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     else
         btn.Text = isim .. ": KAPALI"
-        btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
         btn.TextColor3 = Color3.fromRGB(200, 200, 200)
     end
 end
 
 ---------------------------------------------------
--- PROTOKOLLER VE BUTON BAĞLANTILARI
+-- TEMEL SİSTEMLER (Kısaltılmış)
 ---------------------------------------------------
-
--- 1. UÇUŞ
-local btnFly = ButonOlustur("UÇUŞ (F)")
-local ucan_mi = false
-local iticiGuc = nil
+local btnFly = ButonOlustur("UÇUŞ (F): KAPALI")
+local ucan_mi = false local iticiGuc = nil
 btnFly.MouseButton1Click:Connect(function()
-    ucan_mi = not ucan_mi
-    ButonGuncelle(btnFly, ucan_mi, "UÇUŞ (F)")
+    ucan_mi = not ucan_mi ButonGuncelle(btnFly, ucan_mi, "UÇUŞ (F)")
     local kok = oyuncu.Character and oyuncu.Character:FindFirstChild("HumanoidRootPart")
     if ucan_mi and kok then
-        iticiGuc = Instance.new("BodyVelocity")
-        iticiGuc.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-        iticiGuc.Velocity = Vector3.new(0, 0, 0)
-        iticiGuc.Parent = kok
-    else
-        if iticiGuc then iticiGuc:Destroy() iticiGuc = nil end
-    end
+        iticiGuc = Instance.new("BodyVelocity") iticiGuc.MaxForce = Vector3.new(math.huge, math.huge, math.huge) iticiGuc.Parent = kok
+    else if iticiGuc then iticiGuc:Destroy() iticiGuc = nil end end
 end)
 RunService.RenderStepped:Connect(function()
     if ucan_mi and iticiGuc and oyuncu.Character and oyuncu.Character:FindFirstChild("Humanoid") then
         local hiz = UIS:IsKeyDown(Enum.KeyCode.LeftShift) and 1000 or 150
         if oyuncu.Character.Humanoid.MoveDirection.Magnitude > 0 then
             iticiGuc.Velocity = workspace.CurrentCamera.CFrame.LookVector * hiz
-        else
-            iticiGuc.Velocity = Vector3.new(0, 0, 0)
+        else iticiGuc.Velocity = Vector3.new(0,0,0) end
+    end
+end)
+
+local btnESP = ButonOlustur("OYUNCU GÖRÜŞÜ (ESP): KAPALI")
+local esp_aktif = false
+btnESP.MouseButton1Click:Connect(function()
+    esp_aktif = not esp_aktif ButonGuncelle(btnESP, esp_aktif, "OYUNCU GÖRÜŞÜ")
+    if esp_aktif then
+        for _, o in pairs(game.Players:GetPlayers()) do
+            if o ~= oyuncu and o.Character then
+                local hl = Instance.new("Highlight") hl.Name="JarvisESP" hl.FillColor=Color3.fromRGB(255,0,50) hl.Parent=o.Character
+            end
+        end
+    else
+        for _, o in pairs(game.Players:GetPlayers()) do
+            if o.Character and o.Character:FindFirstChild("JarvisESP") then o.Character.JarvisESP:Destroy() end
         end
     end
 end)
 
--- 2. FLAŞ HIZI (KARADA)
-local btnSpeed = ButonOlustur("FLAŞ HIZI")
-local hiz_aktif = false
-btnSpeed.MouseButton1Click:Connect(function()
-    hiz_aktif = not hiz_aktif
-    ButonGuncelle(btnSpeed, hiz_aktif, "FLAŞ HIZI")
-    local humanoid = oyuncu.Character and oyuncu.Character:FindFirstChild("Humanoid")
-    if humanoid then
-        humanoid.WalkSpeed = hiz_aktif and 100 or 16
-    end
-end)
+-- Araya çizgi çekmek için boşluk
+local ayrac = Instance.new("Frame") ayrac.Size = UDim2.new(0.9, 0, 0, 2) ayrac.BackgroundColor3 = Color3.fromRGB(100, 100, 100) ayrac.Parent = buttonContainer
 
--- 3. SONSUZ ZIPLAMA
-local btnJump = ButonOlustur("SONSUZ ZIPLAMA")
-local ziplama_aktif = false
-btnJump.MouseButton1Click:Connect(function()
-    ziplama_aktif = not ziplama_aktif
-    ButonGuncelle(btnJump, ziplama_aktif, "SONSUZ ZIPLAMA")
-end)
-UIS.JumpRequest:Connect(function()
-    if ziplama_aktif and oyuncu.Character and oyuncu.Character:FindFirstChild("Humanoid") then
-        oyuncu.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-    end
-end)
+---------------------------------------------------
+-- 🔴 JARVIS FUZZER (AĞ DENETÇİSİ) 🔴
+---------------------------------------------------
+local fuzzerBaslik = Instance.new("TextLabel")
+fuzzerBaslik.Size = UDim2.new(0.9, 0, 0, 20)
+fuzzerBaslik.BackgroundTransparency = 1
+fuzzerBaslik.Text = "AĞ SIZMA TESTİ (FUZZER)"
+fuzzerBaslik.TextColor3 = Color3.fromRGB(255, 50, 50)
+fuzzerBaslik.Font = Enum.Font.GothamBold
+fuzzerBaslik.TextSize = 12
+fuzzerBaslik.Parent = buttonContainer
 
--- 4. KUANTUM SIÇRAMASI (CTRL + TIKLA IŞINLAN)
-local btnClickTP = ButonOlustur("KUANTUM SIÇRAMASI")
-local tp_aktif = false
-btnClickTP.MouseButton1Click:Connect(function()
-    tp_aktif = not tp_aktif
-    ButonGuncelle(btnClickTP, tp_aktif, "KUANTUM SIÇRAMASI")
-end)
-fare.Button1Down:Connect(function()
-    if tp_aktif and UIS:IsKeyDown(Enum.KeyCode.LeftControl) and fare.Target then
-        local kok = oyuncu.Character and oyuncu.Character:FindFirstChild("HumanoidRootPart")
-        if kok then
-            -- Tıklanan yerin biraz üstüne ışınla (yere saplanmamak için)
-            kok.CFrame = CFrame.new(fare.Hit.X, fare.Hit.Y + 5, fare.Hit.Z)
+-- Hedef RemoteEvent'in adını gireceğimiz kutu
+local txtRemoteAd = Instance.new("TextBox")
+txtRemoteAd.Size = UDim2.new(0.9, 0, 0, 35)
+txtRemoteAd.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+txtRemoteAd.TextColor3 = Color3.fromRGB(0, 255, 255)
+txtRemoteAd.PlaceholderText = "Hedef RemoteEvent Adını Gir..."
+txtRemoteAd.Font = Enum.Font.Code
+txtRemoteAd.TextSize = 12
+txtRemoteAd.Parent = buttonContainer
+local txtCorner = Instance.new("UICorner") txtCorner.CornerRadius = UDim.new(0, 4) txtCorner.Parent = txtRemoteAd
+
+-- Hedef Bulucu Fonksiyon
+local function HedefBul()
+    local hedefAd = txtRemoteAd.Text
+    local bulundu = nil
+    -- Genellikle RemoteEvent'ler ReplicatedStorage içinde tutulur
+    for _, obje in pairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
+        if obje:IsA("RemoteEvent") and obje.Name == hedefAd then
+            bulundu = obje
+            break
         end
     end
-end)
+    return bulundu
+end
 
--- 5. OTOMATİK TIKLAYICI (AUTO-CLICKER)
-local btnClicker = ButonOlustur("OTOMATİK TIKLAMA")
-local clicker_aktif = false
-btnClicker.MouseButton1Click:Connect(function()
-    clicker_aktif = not clicker_aktif
-    ButonGuncelle(btnClicker, clicker_aktif, "OTOMATİK TIKLAMA")
-end)
-task.spawn(function()
-    while true do
-        if clicker_aktif then
-            -- Fare sol tuşuna sanal basış gönder
-            VirtualUser:ClickButton1(Vector2.new())
-        end
-        task.wait(0.05) -- Saniyede 20 kere tıklar
+-- SALDIRI 1: NEGATİF VE BÜYÜK DEĞER SALDIRISI
+local btnNegatif = ButonOlustur("[TEST 1] NEGATİF DEĞER GÖNDER", Color3.fromRGB(150, 80, 0))
+btnNegatif.MouseButton1Click:Connect(function()
+    local hedef = HedefBul()
+    if hedef then
+        print("Jarvis: Negatif ve sonsuz değerler " .. hedef.Name .. " köprüsüne gönderiliyor!")
+        hedef:FireServer(-99999999) -- Eksi bakiye sömürüsü
+        hedef:FireServer(math.huge) -- Sonsuz sayı (Oyun motorunu çökertmeyi dener)
+    else
+        warn("Jarvis: Hedef RemoteEvent bulunamadı!")
     end
 end)
 
--- 6. ANTİ-AFK
-local btnAfk = ButonOlustur("ANTİ-AFK")
-local afk_aktif = false
-local afk_baglantisi = nil
-btnAfk.MouseButton1Click:Connect(function()
-    afk_aktif = not afk_aktif
-    ButonGuncelle(btnAfk, afk_aktif, "ANTİ-AFK")
-    if afk_aktif then
-        afk_baglantisi = oyuncu.Idled:Connect(function()
-            VirtualUser:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-            task.wait(1)
-            VirtualUser:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+-- SALDIRI 2: KİRLİ VERİ (TİP UYUŞMAZLIĞI) SALDIRISI
+local btnKirli = ButonOlustur("[TEST 2] KİRLİ VERİ GÖNDER", Color3.fromRGB(150, 80, 0))
+btnKirli.MouseButton1Click:Connect(function()
+    local hedef = HedefBul()
+    if hedef then
+        print("Jarvis: Sunucunun kafa karışıklığı test ediliyor...")
+        -- Sunucu sayı beklerken biz yazı, obje veya nil (boşluk) gönderiyoruz
+        hedef:FireServer("ZEHİRLİ_VERİ_123")
+        hedef:FireServer(nil)
+        hedef:FireServer(workspace) 
+    else
+        warn("Jarvis: Hedef RemoteEvent bulunamadı!")
+    end
+end)
+
+-- SALDIRI 3: DDoS SPAM SALDIRISI (Yarış Durumu / Dupe Testi)
+local btnSpam = ButonOlustur("[TEST 3] DDoS SPAM (AÇIK/KAPALI)", Color3.fromRGB(150, 30, 30))
+local spam_aktif = false
+
+btnSpam.MouseButton1Click:Connect(function()
+    spam_aktif = not spam_aktif
+    local hedef = HedefBul()
+    
+    if spam_aktif and hedef then
+        btnSpam.Text = "[TEST 3] DDoS SPAM: AKTİF!"
+        btnSpam.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+        print("Jarvis: Sunucuya saniyede 1000 sinyal gönderiliyor. Yükleniliyor...")
+        
+        task.spawn(function()
+            while spam_aktif do
+                hedef:FireServer(1) -- Sürekli 1 birimlik komut yolla
+                task.wait() -- Milisaniyelik bekleme
+            end
         end)
     else
-        if afk_baglantisi then afk_baglantisi:Disconnect() afk_baglantisi = nil end
+        spam_aktif = false
+        btnSpam.Text = "[TEST 3] DDoS SPAM (AÇIK/KAPALI)"
+        btnSpam.BackgroundColor3 = Color3.fromRGB(150, 30, 30)
+        print("Jarvis: Spam saldırısı durduruldu.")
     end
 end)
 
--- 7. ANTİ-LAG (FPS)
-local btnLag = ButonOlustur("ANTİ-LAG (FPS)")
-local lag_aktif = false
-btnLag.MouseButton1Click:Connect(function()
-    lag_aktif = not lag_aktif
-    ButonGuncelle(btnLag, lag_aktif, "ANTİ-LAG (FPS)")
-    if lag_aktif then
-        Lighting.GlobalShadows = false
-        for _, obje in pairs(workspace:GetDescendants()) do
-            if obje:IsA("BasePart") then obje.Material = Enum.Material.SmoothPlastic obje.CastShadow = false
-            elseif obje:IsA("Decal") or obje:IsA("Texture") then obje.Transparency = 1
-            elseif obje:IsA("ParticleEmitter") or obje:IsA("Trail") then obje.Enabled = false end
-        end
-    end
-end)
-
--- 8. GECE GÖRÜŞÜ
-local btnIsik = ButonOlustur("GECE GÖRÜŞÜ")
-local isik_aktif = false
-btnIsik.MouseButton1Click:Connect(function()
-    isik_aktif = not isik_aktif
-    ButonGuncelle(btnIsik, isik_aktif, "GECE GÖRÜŞÜ")
-    if isik_aktif then
-        Lighting.Ambient = Color3.new(1, 1, 1)
-        Lighting.ColorShift_Bottom = Color3.new(1, 1, 1)
-        Lighting.ColorShift_Top = Color3.new(1, 1, 1)
-        Lighting.FogEnd = 100000 
-        Lighting.Brightness = 2
-        Lighting.ClockTime = 14 
-    else
-        Lighting.Ambient = Color3.fromRGB(128, 128, 128)
-        Lighting.Brightness = 1
-    end
-end)
-
-print("Jarvis V3 Tüm Sistemleri Çevrimiçi.")
+print("Jarvis V5 Fuzzer Aktif. Sızma testine hazırız efendim.")
