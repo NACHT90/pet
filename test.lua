@@ -1,4 +1,4 @@
--- Modül: Jarvis Ana Kontrol Menüsü V8 (Kitle Saldırısı / Carpet Bombing)
+-- Modül: Jarvis Ana Kontrol Menüsü V9 (Keskin Nişancı & Pano Kopyalayıcı)
 local oyuncu = game.Players.LocalPlayer
 local UIS = game:GetService("UserInputService")
 local VirtualUser = game:GetService("VirtualUser")
@@ -11,19 +11,19 @@ screenGui.Name = "JarvisMenu"
 screenGui.Parent = playerGui
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 250, 0, 720)  -- Yeni buton için ekranı son kez uzattık
+frame.Size = UDim2.new(0, 250, 0, 680) 
 frame.Position = UDim2.new(0.8, 0, 0.3, -150) 
 frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20) 
 frame.BorderSizePixel = 0 
 frame.Active = true frame.Draggable = true frame.Parent = screenGui
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
 
-local topBar = Instance.new("Frame") topBar.Size = UDim2.new(1, 0, 0, 5) topBar.BackgroundColor3 = Color3.fromRGB(255, 0, 0) topBar.Parent = frame
+local topBar = Instance.new("Frame") topBar.Size = UDim2.new(1, 0, 0, 5) topBar.BackgroundColor3 = Color3.fromRGB(0, 255, 100) topBar.Parent = frame
 Instance.new("UICorner", topBar).CornerRadius = UDim.new(0, 8)
 
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 35)
-title.Text = "JARVIS V8 [DOOMSDAY]"
+title.Text = "JARVIS V9 [SNIPER]"
 title.BackgroundTransparency = 1
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.Font = Enum.Font.GothamBlack
@@ -45,85 +45,51 @@ local function ButonOlustur(isim, renk)
 end
 
 -- 1. AŞAMA: AĞ TARAYICISI
-local lblTarayici = Instance.new("TextLabel") lblTarayici.Size = UDim2.new(0.9, 0, 0, 20) lblTarayici.BackgroundTransparency = 1 lblTarayici.Text = "HEDEF BULUCU RADAR" lblTarayici.TextColor3 = Color3.fromRGB(255, 150, 0) lblTarayici.Font = Enum.Font.GothamBold lblTarayici.TextSize = 12 lblTarayici.Parent = buttonContainer
+local lblTarayici = Instance.new("TextLabel") lblTarayici.Size = UDim2.new(0.9, 0, 0, 20) lblTarayici.BackgroundTransparency = 1 lblTarayici.Text = "HEDEF BULUCU RADAR" lblTarayici.TextColor3 = Color3.fromRGB(0, 255, 100) lblTarayici.Font = Enum.Font.GothamBold lblTarayici.TextSize = 12 lblTarayici.Parent = buttonContainer
 local txtHedef = Instance.new("TextBox") txtHedef.Size = UDim2.new(0.9, 0, 0, 30) txtHedef.BackgroundColor3 = Color3.fromRGB(10, 10, 10) txtHedef.TextColor3 = Color3.fromRGB(0, 255, 255) txtHedef.Text = "Hedef Bekleniyor..." txtHedef.Font = Enum.Font.Code txtHedef.TextSize = 11 txtHedef.TextEditable = false txtHedef.Parent = buttonContainer
-local frameTarama = Instance.new("ScrollingFrame") frameTarama.Size = UDim2.new(0.9, 0, 0, 100) frameTarama.BackgroundColor3 = Color3.fromRGB(15, 15, 15) frameTarama.ScrollBarThickness = 3 frameTarama.Parent = buttonContainer
-local taramaLayout = Instance.new("UIListLayout") taramaLayout.Parent = frameTarama
 
 local secilenHedefObjesi = nil
-local btnTara = ButonOlustur("🔍 AĞI TARA VE BUL", Color3.fromRGB(0, 100, 150))
-btnTara.MouseButton1Click:Connect(function()
-    for _, child in pairs(frameTarama:GetChildren()) do if child:IsA("TextButton") then child:Destroy() end end
+
+-- YENİ BUTON: LİSTEYİ KOPYALA
+local btnKopyala = ButonOlustur("📋 TÜM KÖPRÜLERİ KOPYALA", Color3.fromRGB(0, 100, 150))
+btnKopyala.MouseButton1Click:Connect(function()
+    btnKopyala.Text = "KOPYALANIYOR..."
+    local liste = ""
     local bulunan = 0
     for _, obje in pairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
         if obje:IsA("RemoteEvent") then
             bulunan = bulunan + 1
-            local btnRemote = Instance.new("TextButton") btnRemote.Size = UDim2.new(1, 0, 0, 25) btnRemote.Text = "🎯 " .. obje.Name btnRemote.BackgroundColor3 = Color3.fromRGB(30, 30, 30) btnRemote.TextColor3 = Color3.fromRGB(200, 200, 200) btnRemote.Font = Enum.Font.Code btnRemote.TextSize = 10 btnRemote.Parent = frameTarama
-            btnRemote.MouseButton1Click:Connect(function() secilenHedefObjesi = obje txtHedef.Text = obje.Name txtHedef.TextColor3 = Color3.fromRGB(0, 255, 0) end)
+            liste = liste .. obje.Name .. "\n"
         end
     end
-    frameTarama.CanvasSize = UDim2.new(0, 0, 0, bulunan * 25) btnTara.Text = bulunan .. " Köprü Bulundu (Listeden Seç)"
+    
+    -- Exploit'in panoya kopyalama yeteneği (setclipboard) varsa kullan
+    if setclipboard then
+        setclipboard(liste)
+        btnKopyala.Text = "KOPYALANDI! (CTRL+V YAPIN)"
+        btnKopyala.BackgroundColor3 = Color3.fromRGB(0, 150, 50)
+    else
+        -- Eğer executor desteklemiyorsa F9 konsoluna yazdır
+        warn("Jarvis Köprü Listesi:\n" .. liste)
+        btnKopyala.Text = "F9 KONSOLUNA YAZDIRILDI!"
+    end
+    
+    task.wait(3)
+    btnKopyala.Text = "📋 TÜM KÖPRÜLERİ KOPYALA"
+    btnKopyala.BackgroundColor3 = Color3.fromRGB(0, 100, 150)
 end)
 
 Instance.new("Frame", buttonContainer).Size = UDim2.new(0.9, 0, 0, 2)
 
--- 2. AŞAMA: TEKLİ SALDIRILAR
+-- 2. AŞAMA: SALDIRILAR (Eski menüler, hedefi buraya kodlayacağız)
+local lblSaldiri = Instance.new("TextLabel") lblSaldiri.Size = UDim2.new(0.9, 0, 0, 20) lblSaldiri.BackgroundTransparency = 1 lblSaldiri.Text = "NOKTA ATIŞI SALDIRI" lblSaldiri.TextColor3 = Color3.fromRGB(255, 50, 50) lblSaldiri.Font = Enum.Font.GothamBold lblSaldiri.TextSize = 12 lblSaldiri.Parent = buttonContainer
+
 local btnNegatif = ButonOlustur("[TEST 1] NEGATİF GÖNDER", Color3.fromRGB(150, 80, 0))
-btnNegatif.MouseButton1Click:Connect(function() if secilenHedefObjesi then secilenHedefObjesi:FireServer(-99999999) secilenHedefObjesi:FireServer(math.huge) end end)
-
 local btnKirli = ButonOlustur("[TEST 2] KİRLİ VERİ GÖNDER", Color3.fromRGB(150, 80, 0))
-btnKirli.MouseButton1Click:Connect(function() if secilenHedefObjesi then secilenHedefObjesi:FireServer("ZEHİRLİ") secilenHedefObjesi:FireServer(nil) end end)
-
 local btnSpam = ButonOlustur("[TEST 3] DDoS SPAM", Color3.fromRGB(150, 30, 30))
-local spam_aktif = false
-btnSpam.MouseButton1Click:Connect(function()
-    spam_aktif = not spam_aktif
-    if spam_aktif and secilenHedefObjesi then
-        btnSpam.Text = "SPAM: AKTİF!" btnSpam.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-        task.spawn(function() while spam_aktif do secilenHedefObjesi:FireServer(1) task.wait() end end)
-    else spam_aktif = false btnSpam.Text = "[TEST 3] DDoS SPAM" btnSpam.BackgroundColor3 = Color3.fromRGB(150, 30, 30) end
-end)
 
+-- Canlı Gözlemci Modülü
 Instance.new("Frame", buttonContainer).Size = UDim2.new(0.9, 0, 0, 2)
-
----------------------------------------------------
--- ☢️ 4. AŞAMA: HALI BOMBARDIMANI (KİTLE SALDIRISI) ☢️
----------------------------------------------------
-local btnDoomsday = ButonOlustur("💥 [TEST 4] TÜMÜNE AYNI ANDA SALDIR", Color3.fromRGB(150, 0, 0))
-
-btnDoomsday.MouseButton1Click:Connect(function()
-    print("Jarvis: HALI BOMBARDIMANI BAŞLADI! 328+ Köprü aynı anda vuruluyor...")
-    btnDoomsday.Text = "BOMBARDIMAN DEVREDE! LÜTFEN BEKLEYİN..."
-    btnDoomsday.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-    
-    local tumKopruler = {}
-    for _, obje in pairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
-        if obje:IsA("RemoteEvent") then
-            table.insert(tumKopruler, obje)
-        end
-    end
-    
-    task.spawn(function()
-        for _, hedef in pairs(tumKopruler) do
-            -- Oyun çökmesin diye hataları yoksayan güvenli çağrı (pcall) kullanıyoruz
-            pcall(function()
-                hedef:FireServer(-99999999) -- Negatif saldırı
-                hedef:FireServer("JARVIS_ZEHİRLİ_VERİ") -- Tip uyuşmazlığı saldırısı
-                hedef:FireServer(math.huge) -- Sonsuz sayı saldırısı
-            end)
-            task.wait(0.01) -- İstemcinin çökmemesi için mikrosaniyelik mola
-        end
-        print("Jarvis: Tüm köprülere saldırı tamamlandı.")
-        btnDoomsday.Text = "💥 [TEST 4] TÜMÜNE AYNI ANDA SALDIR"
-        btnDoomsday.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
-    end)
-end)
-
-Instance.new("Frame", buttonContainer).Size = UDim2.new(0.9, 0, 0, 2)
-
----------------------------------------------------
--- 🟢 5. AŞAMA: CANLI GÖZLEMCİ (OBSERVER) 🟢
----------------------------------------------------
 local lblGozlem = Instance.new("TextLabel") lblGozlem.Size = UDim2.new(0.9, 0, 0, 20) lblGozlem.BackgroundTransparency = 1 lblGozlem.Text = "CÜZDAN CANLI DİNLEME" lblGozlem.TextColor3 = Color3.fromRGB(0, 255, 100) lblGozlem.Font = Enum.Font.GothamBold lblGozlem.TextSize = 12 lblGozlem.Parent = buttonContainer
 local txtAnaliz = Instance.new("TextLabel") txtAnaliz.Size = UDim2.new(0.9, 0, 0, 60) txtAnaliz.BackgroundColor3 = Color3.fromRGB(10, 10, 10) txtAnaliz.TextColor3 = Color3.fromRGB(100, 100, 100) txtAnaliz.Text = "Saldırı başlatıldığında burayı izleyin." txtAnaliz.Font = Enum.Font.Code txtAnaliz.TextSize = 10 txtAnaliz.TextWrapped = true txtAnaliz.Parent = buttonContainer
 Instance.new("UICorner", txtAnaliz).CornerRadius = UDim.new(0, 4)
@@ -140,4 +106,4 @@ if oyuncu:WaitForChild("leaderstats", 5) then
     end
 end
 
-print("Jarvis Doomsday Protokolü Devrede.")
+print("Jarvis V9: Keskin Nişancı Modu Devrede.")
