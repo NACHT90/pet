@@ -1,79 +1,116 @@
 --[[
     [destroyerr1558 Advanced Code Creator]
-    Project: Moon Universe - Elite UI System 2035
-    Theme: Neon Amethyst / Dark Mode
-    Features: Draggable, Animated, X-Close, Responsive Toggles
+    Project: Moon Universe - PS99 Hardcoded UI
+    Status: Absolute Stability (No External Links)
+    Features: Draggable, Toggle System, Speed, Fly, X Button
 ]]--
 
--- UI Kütüphanesi (Fluent - En modern ve şık kütüphanedir)
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
-local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
-local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
+-- Mevcut menü varsa sil (Üst üste binmemesi için)
+local oldUI = game.CoreGui:FindFirstChild("MoonUniverseVIP")
+if oldUI then oldUI:Destroy() end
 
-local Window = Fluent:CreateWindow({
-    Title = "Moon Universe VIP 🌙 [2035 Edition]",
-    SubTitle = "by destroyerr1558",
-    TabWidth = 160,
-    Size = UDim2.fromOffset(580, 460),
-    Acrylic = true, -- Arka plan bulanıklığı (Glass effect)
-    Theme = "Darker",
-    MinimizeKey = Enum.KeyCode.RightControl -- Menüyü gizleme tuşu
-})
+-- // ANA GUI OLUŞTURMA //
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local TitleBar = Instance.new("Frame")
+local TitleLabel = Instance.new("TextLabel")
+local CloseButton = Instance.new("TextButton")
+local Container = Instance.new("ScrollingFrame")
+local UIListLayout = Instance.new("UIListLayout")
 
--- // SEKMELER //
-local Tabs = {
-    Main = Window:AddTab({ Title = "Dashboard", Icon = "home" }),
-    Settings = Window:AddTab({ Title = "Ayarlar & X", Icon = "settings" })
-}
+ScreenGui.Name = "MoonUniverseVIP"
+ScreenGui.Parent = game.CoreGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-local Options = Fluent.Options
+-- Ana Panel Tasarımı
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MainFrame.BorderSizePixel = 0
+MainFrame.Position = UDim2.new(0.35, 0, 0.3, 0)
+MainFrame.Size = UDim2.new(0, 350, 0, 400)
+MainFrame.Active = true
+MainFrame.Draggable = true -- Paneli sürükleyebilirsin
 
--- // ANA ÖZELLİKLER //
-Tabs.Main:AddParagraph({
-    Title = "Hoş Geldin, " .. game.Players.LocalPlayer.Name,
-    Content = "Moon evreninin en gelişmiş PS99 hilesini kullanıyorsun."
-})
+-- Başlık Çubuğu
+TitleBar.Name = "TitleBar"
+TitleBar.Parent = MainFrame
+TitleBar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+TitleBar.Size = UDim2.new(1, 0, 0, 40)
 
-local MultiToggle = Tabs.Main:AddToggle("InfinitePets", {Title = "Sınırsız Pet Slotu (Visual)", Default = false })
-local CollectToggle = Tabs.Main:AddToggle("AutoCollect", {Title = "Otomatik Orb Toplama", Default = false })
-local FlightToggle = Tabs.Main:AddToggle("Flight", {Title = "Uçma Modu (Fly)", Default = false })
+TitleLabel.Parent = TitleBar
+TitleLabel.Text = " 🌙 MOON UNIVERSE VIP [2035]"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.TextSize = 18
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.Size = UDim2.new(1, -40, 1, 0)
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
 
-Tabs.Main:AddSlider("WalkSpeed", {
-    Title = "Yürüme Hızı",
-    Description = "Karakter hızını ayarlar.",
-    Default = 50,
-    Min = 16,
-    Max = 300,
-    Rounding = 1,
-    Callback = function(Value)
-        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
-    end
-})
+-- X Butonu (Kapatma)
+CloseButton.Name = "CloseButton"
+CloseButton.Parent = TitleBar
+CloseButton.Text = "X"
+CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+CloseButton.Size = UDim2.new(0, 40, 0, 40)
+CloseButton.Position = UDim2.new(1, -40, 0, 0)
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
 
--- // LOGIC (KODUN ÇALIŞMA KISMI) //
+-- İçerik Alanı
+Container.Parent = MainFrame
+Container.Size = UDim2.new(1, -20, 1, -60)
+Container.Position = UDim2.new(0, 10, 0, 50)
+Container.BackgroundTransparency = 1
+Container.ScrollBarThickness = 4
 
--- Pet Slot Logic
-MultiToggle:OnChanged(function()
-    _G.InfPets = Options.InfinitePets.Value
+UIListLayout.Parent = Container
+UIListLayout.Padding = UDim.new(0, 10)
+
+-- // FONKSİYON OLUŞTURUCULAR //
+local function CreateToggle(text, callback)
+    local Button = Instance.new("TextButton")
+    local state = false
+    
+    Button.Size = UDim2.new(1, -10, 0, 40)
+    Button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    Button.Text = text .. " : OFF"
+    Button.TextColor3 = Color3.fromRGB(200, 200, 200)
+    Button.Font = Enum.Font.Gotham
+    Button.TextSize = 14
+    Button.Parent = Container
+    
+    Button.MouseButton1Click:Connect(function()
+        state = not state
+        Button.Text = text .. (state and " : ON" or " : OFF")
+        Button.BackgroundColor3 = state and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(45, 45, 45)
+        callback(state)
+    end)
+end
+
+-- // HİLELERİ EKLE //
+
+-- 1. Infinite Pets
+CreateToggle("Sınırsız Pet Slotu", function(v)
+    _G.InfPets = v
     task.spawn(function()
         while _G.InfPets do
             pcall(function()
-                local lib = require(game:GetService("ReplicatedStorage").Library.Client.Save).Get()
-                lib.MaxEquipped = 999
+                local save = require(game:GetService("ReplicatedStorage").Library.Client.Save).Get()
+                save.MaxEquipped = 999
             end)
             task.wait(1)
         end
     end)
 end)
 
--- Orb Collect Logic
-CollectToggle:OnChanged(function()
-    _G.CollectOrbs = Options.AutoCollect.Value
+-- 2. Auto Orb
+CreateToggle("Otomatik Orb Toplama", function(v)
+    _G.CollectOrbs = v
     task.spawn(function()
         while _G.CollectOrbs do
             pcall(function()
-                for _, v in pairs(game:GetService("Workspace").Scene.Orbs:GetChildren()) do
-                    v.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
+                for _, orb in pairs(game:GetService("Workspace").Scene.Orbs:GetChildren()) do
+                    orb.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
                 end
             end)
             task.wait(0.1)
@@ -81,14 +118,14 @@ CollectToggle:OnChanged(function()
     end)
 end)
 
--- Flight Logic
-FlightToggle:OnChanged(function()
-    _G.Flying = Options.Flight.Value
+-- 3. Flight
+CreateToggle("Uçma Modu (Fly)", function(v)
+    _G.Flying = v
     local char = game.Players.LocalPlayer.Character
     if _G.Flying then
         local bv = Instance.new("BodyVelocity", char.HumanoidRootPart)
         bv.Name = "MoonFly"
-        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
         task.spawn(function()
             while _G.Flying do
                 bv.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * 100
@@ -96,35 +133,16 @@ FlightToggle:OnChanged(function()
             end
             bv:Destroy()
         end)
+    else
+        if char.HumanoidRootPart:FindFirstChild("MoonFly") then
+            char.HumanoidRootPart.MoonFly:Destroy()
+        end
     end
 end)
 
--- // AYARLAR VE X BUTONU //
-Tabs.Settings:AddButton({
-    Title = "Menüyü Tamamen Kapat (X)",
-    Description = "Scripti ve arayüzü yok eder.",
-    Callback = function()
-        Window:Destroy()
-    end
-})
+-- 4. Speed
+CreateToggle("Süper Hız (250)", function(v)
+    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = v and 250 or 16
+end)
 
-Tabs.Settings:AddButton({
-    Title = "Konfigürasyonu Kaydet",
-    Callback = function()
-        SaveManager:Save(Window.Id)
-        Fluent:Notify({
-            Title = "Sistem",
-            Content = "Ayarlar başarıyla kaydedildi!",
-            Duration = 5
-        })
-    end
-})
-
--- Bildirim Gönder
-Fluent:Notify({
-    Title = "Moon Universe Aktif",
-    Content = "Gelişmiş tasarım başarıyla yüklendi.",
-    Duration = 8
-})
-
-Window:SelectTab(1)
+print("[destroyerr1558 Advanced Code Creator] UI Başarıyla Oluşturuldu!")
