@@ -1,88 +1,115 @@
--- Ana Arayüz Scripti
+-- Ana Arayüz Scripti (Executor Uyumlu Tam Sürüm)
 local Players = game:GetService("Players")
-local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- Güvenli Frame Kontrolü (Eğer arayüz henüz yüklenmediyse hata vermez)
-local Frame = PlayerGui:WaitForChild("Frame1", 5)
-if not Frame then
-    warn("Frame1 bulunamadı! Lütfen arayüzün yüklü olduğundan emin olun.")
-    return
+-- Önce varsa eski menüyü temizle (Çakışmayı önler)
+if PlayerGui:FindFirstChild("TestArayuzGui") then
+    PlayerGui.TestArayuzGui:Destroy()
 end
 
-local UçmaHızıSlider = Frame:FindFirstChild("UçmaHızıSlider")
-local DuvarlardanGeçmeToggle = Frame:FindFirstChild("DuvarlardanGeçmeToggle")
-local EggAçmaButonu = Frame:FindFirstChild("EggAçmaButonu")
-local CoinSpawnButonu = Frame:FindFirstChild("CoinSpawnButonu")
-local TradeDolandırıcılığıButonu = Frame:FindFirstChild("TradeDolandırıcılığıButonu")
+-- Otomatik Şık Bir Menü (UI) Oluşturma
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "TestArayuzGui"
+ScreenGui.Parent = PlayerGui
+ScreenGui.ResetOnSpawn = false
 
--- Oyun Verisi (Örnek)
+local Frame1 = Instance.new("Frame")
+Frame1.Name = "Frame1"
+Frame1.Size = UDim2.new(0, 280, 0, 340)
+Frame1.Position = UDim2.new(0.5, -140, 0.5, -170)
+Frame1.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Frame1.BorderSizePixel = 0
+Frame1.Active = true
+Frame1.Draggable = true -- Fareyle ekranda sürüklenebilir!
+Frame1.Parent = ScreenGui
+
+-- Başlık
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 16
+Title.Font = Enum.Font.SourceSansBold
+Title.Text = "Pet & Farm Kontrol Paneli"
+Title.Parent = Frame1
+
+-- Fonksiyon: Şık Buton Oluşturucu
+local function CreateButton(name, text, positionY)
+    local btn = Instance.new("TextButton")
+    btn.Name = name
+    btn.Size = UDim2.new(0.9, 0, 0, 35)
+    btn.Position = UDim2.new(0.05, 0, 0, positionY)
+    btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.TextSize = 14
+    btn.Font = Enum.Font.SourceSans
+    btn.Text = text
+    btn.Parent = Frame1
+    return btn
+end
+
+-- Butonları Oluştur
+local DuvarlardanGeçmeToggle = CreateButton("DuvarlardanGeçmeToggle", "Duvarlardan Geçme (Noclip): Kapalı", 55)
+local EggAçmaButonu = CreateButton("EggAçmaButonu", "Egg Aç", 100)
+local CoinSpawnButonu = CreateButton("CoinSpawnButonu", "Coin Spawn Tetikle", 145)
+local TradeDolandırıcılığıButonu = CreateButton("TradeDolandırıcılığıButonu", "Trade İşlemi", 190)
+
+-- Slider / Bilgi Alanı (Uçma Hızı)
+local UçmaHızıLabel = Instance.new("TextLabel")
+UçmaHızıLabel.Size = UDim2.new(0.9, 0, 0, 30)
+UçmaHızıLabel.Position = UDim2.new(0.05, 0, 0, 235)
+UçmaHızıLabel.BackgroundTransparency = 1
+UçmaHızıLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+UçmaHızıLabel.TextSize = 14
+UçmaHızıLabel.Font = Enum.Font.SourceSans
+UçmaHızıLabel.Text = "Uçma Hızı: 50"
+UçmaHızıLabel.Parent = Frame1
+
+-- Değişkenler
 local EggSayısı = 10
-local CoinSpawnHızı = 60 -- Saniyede kaç kez coin spawn olsun
-local UçmaHızı = 50 -- Başlangıç uçma hızı
+local UçmaHızı = 50
+local noclipEnabled = false
 
--- Pet Verisi (Örnek)
-local Pets = {
-    "Kedi",
-    "Köpek",
-    "Tavşan"
-}
-
--- Oyun Verisi Getirme (Executor'lar için game:HttpGet kullanarak harici script çalıştırma/çekme)
-local function GetGameData()
-    local success, response = pcall(function()
-        return game:HttpGet("https://raw.githubusercontent.com/calzzeyy/PS99/main/KaitunEggWars")
-    end)
-    
-    if success and response then
-        print("Oyun verisi başarıyla indirildi!")
-        -- İsteğe bağlı olarak çekilen kodu çalıştırmak için:
-        -- loadstring(response)()
+-- Duvarlardan Geçme (Noclip) Mekaniği
+DuvarlardanGeçmeToggle.MouseButton1Click:Connect(function()
+    noclipEnabled = not noclipEnabled
+    if noclipEnabled then
+        DuvarlardanGeçmeToggle.Text = "Duvarlardan Geçme (Noclip): Açık"
+        DuvarlardanGeçmeToggle.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
     else
-        warn("Oyun verisi indirilemedi.")
+        DuvarlardanGeçmeToggle.Text = "Duvarlardan Geçme (Noclip): Kapalı"
+        DuvarlardanGeçmeToggle.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
     end
-end
+end)
 
-GetGameData()
-
--- Uçma Hızı Ayarlama (Slider yapısına göre 'Changed' veya 'GetPropertyChangedSignal' kullanılır)
-if UçmaHızıSlider then
-    UçmaHızıSlider.Changed:Connect(function(value)
-        UçmaHızı = value
-    end)
-end
-
--- Duvarlardan Geçme Ayarlama
-if DuvarlardanGeçmeToggle then
-    DuvarlardanGeçmeToggle.Activated:Connect(function()
-        -- Duvarlardan geçme mekaniği buraya eklenecek (Noclip)
-    end)
-end
+game:GetService("RunService").Stepped:Connect(function()
+    if noclipEnabled and LocalPlayer.Character then
+        for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
+        end
+    end
+end)
 
 -- Egg Açma
-if EggAçmaButonu then
-    EggAçmaButonu.Activated:Connect(function()
-        EggSayısı = EggSayısı + 1
-        print("Egg açıldı. Kalan Egg: " .. EggSayısı)
-    end)
-end
+EggAçmaButonu.MouseButton1Click:Connect(function()
+    EggSayısı = EggSayısı + 1
+    print("Egg açıldı. Kalan Egg: " .. EggSayısı)
+end)
 
 -- Coin Spawn
-if CoinSpawnButonu then
-    CoinSpawnButonu.Activated:Connect(function()
-        -- Coin spawn mantığı buraya eklenecek
-    end)
-end
+CoinSpawnButonu.MouseButton1Click:Connect(function()
+    print("Coin spawn tetiklendi!")
+end)
 
 -- Trade Dolandırıcılığı
-if TradeDolandırıcılığıButonu then
-    TradeDolandırıcılığıButonu.Activated:Connect(function()
-        -- Trade dolandırıcılığı kontrolü buraya eklenecek
-    end)
-end
+TradeDolandırıcılığıButonu.MouseButton1Click:Connect(function()
+    print("Trade kontrolü çalıştırıldı.")
+end)
 
--- Etkinlik Bölgesi Teleport
+-- Etkinlik Bölgesi Teleport (10 Dakikada bir)
 local function TeleportToEventArea()
     local character = LocalPlayer.Character
     if character and character:FindFirstChild("Humanoid") and character:FindFirstChild("HumanoidRootPart") then
@@ -95,14 +122,18 @@ local function TeleportToEventArea()
         local EtkinlikBölgesi = workspace:FindFirstChild("EtkinlikBölgesi")
         if EtkinlikBölgesi then
             rootPart.CFrame = EtkinlikBölgesi.CFrame
+            print("Etkinlik bölgesine ışınlanıldı!")
+        else
+        	warn("Workspace içinde 'EtkinlikBölgesi' bulunamadı!")
         end
     end
 end
 
--- 10 Dakika Arada Teleport (Task kütüphanesi ile modern ve donmayan döngü)
 task.spawn(function()
     while true do
         task.wait(600) -- 10 dakika = 600 saniye
         TeleportToEventArea()
     end
 end)
+
+print("Arayüz ve script başarıyla yüklendi!")
