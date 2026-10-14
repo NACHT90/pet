@@ -1,14 +1,21 @@
-`lua
 -- Ana Arayüz Scripti
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
-local ScreenGui = Players.LocalPlayer:WaitForChild("PlayerGui")
-local Frame = ScreenGui.Frame1
-local UçmaHızıSlider = Frame.UçmaHızıSlider
-local DuvarlardanGeçmeToggle = Frame.DuvarlardanGeçmeToggle
-local EggAçmaButonu = Frame.EggAçmaButonu
-local CoinSpawnButonu = Frame.CoinSpawnButonu
-local TradeDolandırıcılığıButonu = Frame.TradeDolandırıcılığıButonu
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+-- Güvenli Frame Kontrolü (Eğer arayüz henüz yüklenmediyse hata vermez)
+local Frame = PlayerGui:WaitForChild("Frame1", 5)
+if not Frame then
+    warn("Frame1 bulunamadı! Lütfen arayüzün yüklü olduğundan emin olun.")
+    return
+end
+
+local UçmaHızıSlider = Frame:FindFirstChild("UçmaHızıSlider")
+local DuvarlardanGeçmeToggle = Frame:FindFirstChild("DuvarlardanGeçmeToggle")
+local EggAçmaButonu = Frame:FindFirstChild("EggAçmaButonu")
+local CoinSpawnButonu = Frame:FindFirstChild("CoinSpawnButonu")
+local TradeDolandırıcılığıButonu = Frame:FindFirstChild("TradeDolandırıcılığıButonu")
 
 -- Oyun Verisi (Örnek)
 local EggSayısı = 10
@@ -22,59 +29,80 @@ local Pets = {
     "Tavşan"
 }
 
--- Oyun Verisi Getirme
+-- Oyun Verisi Getirme (Executor'lar için game:HttpGet kullanarak harici script çalıştırma/çekme)
 local function GetGameData()
-    local Data = HttpService:GetAsync("https://raw.githubusercontent.com/calzzeyy/PS99/main/KaitunEggWars")
-    if Data.Successful then
-        local ScriptString = Data.Content:Read(8192)
-        local Script = game:GetService("ScriptService"):NewScript("KaitunEggWars")
-        Script.Content = ScriptString
-        Script:MoveTo(game.StarterGui)
-        print("Oyun verisi başarıyla yüklendi!")
+    local success, response = pcall(function()
+        return game:HttpGet("https://raw.githubusercontent.com/calzzeyy/PS99/main/KaitunEggWars")
+    end)
+    
+    if success and response then
+        print("Oyun verisi başarıyla indirildi!")
+        -- İsteğe bağlı olarak çekilen kodu çalıştırmak için:
+        -- loadstring(response)()
     else
-        print("Oyun verisi indirilemedi.")
+        warn("Oyun verisi indirilemedi.")
     end
 end
 
 GetGameData()
 
--- Uçma Hızı Ayarlama
-UçmaHızıSlider.Changed:Connect(function(value)
-    UçmaHızı = value
-end)
+-- Uçma Hızı Ayarlama (Slider yapısına göre 'Changed' veya 'GetPropertyChangedSignal' kullanılır)
+if UçmaHızıSlider then
+    UçmaHızıSlider.Changed:Connect(function(value)
+        UçmaHızı = value
+    end)
+end
 
 -- Duvarlardan Geçme Ayarlama
-DuvarlardanGeçmeToggle.Activated:Connect(function(value)
-    -- Duvarlardan geçme mekaniği buraya eklenecek
-end)
+if DuvarlardanGeçmeToggle then
+    DuvarlardanGeçmeToggle.Activated:Connect(function()
+        -- Duvarlardan geçme mekaniği buraya eklenecek (Noclip)
+    end)
+end
 
 -- Egg Açma
-EggAçmaButonu.Click:Connect(function()
-    EggSayısı = EggSayısı + 1
-    print("Egg açıldı. Kalan Egg: " .. EggSayısı)
-end)
+if EggAçmaButonu then
+    EggAçmaButonu.Activated:Connect(function()
+        EggSayısı = EggSayısı + 1
+        print("Egg açıldı. Kalan Egg: " .. EggSayısı)
+    end)
+end
 
 -- Coin Spawn
-CoinSpawnButonu.Click:Connect(function()
-    -- Coin spawn mantığı buraya eklenecek
-end)
+if CoinSpawnButonu then
+    CoinSpawnButonu.Activated:Connect(function()
+        -- Coin spawn mantığı buraya eklenecek
+    end)
+end
 
 -- Trade Dolandırıcılığı
-TradeDolandırıcılığıButonu.Click:Connect(function()
-    -- Trade dolandırıcılığı kontrolü buraya eklenecek
-end)
+if TradeDolandırıcılığıButonu then
+    TradeDolandırıcılığıButonu.Activated:Connect(function()
+        -- Trade dolandırıcılığı kontrolü buraya eklenecek
+    end)
+end
 
 -- Etkinlik Bölgesi Teleport
-local EtkinlikBölgesi = game.Workspace.EtkinlikBölgesi -- Etkinlik bölgesinin adını buraya göre değiştirin
-
 local function TeleportToEventArea()
-    Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100
-    Players.LocalPlayer.Character.Humanoid.JumpPower = 100
-    Players.LocalPlayer.Character.Humanoid.MoveTo(EtkinlikBölgesi.Position)
+    local character = LocalPlayer.Character
+    if character and character:FindFirstChild("Humanoid") and character:FindFirstChild("HumanoidRootPart") then
+        local humanoid = character.Humanoid
+        local rootPart = character.HumanoidRootPart
+        
+        humanoid.WalkSpeed = 100
+        humanoid.JumpPower = 100
+        
+        local EtkinlikBölgesi = workspace:FindFirstChild("EtkinlikBölgesi")
+        if EtkinlikBölgesi then
+            rootPart.CFrame = EtkinlikBölgesi.CFrame
+        end
+    end
 end
 
--- 10 Dakika Arada Teleport
-while true do
-    wait(600) -- 10 dakika = 600 saniye
-    TeleportToEventArea()
-end
+-- 10 Dakika Arada Teleport (Task kütüphanesi ile modern ve donmayan döngü)
+task.spawn(function()
+    while true do
+        task.wait(600) -- 10 dakika = 600 saniye
+        TeleportToEventArea()
+    end
+end)
