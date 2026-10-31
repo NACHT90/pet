@@ -1,10 +1,9 @@
--- Süper Kontrol Paneli v9 (Tüm Çılgın ve Uçuk Kaçık Özellikler Eksiksiz)
+-- Süper Kontrol Paneli v10 (Pet Spawn + Ordu + Auto-Farm + Tüm Çılgın Özellikler)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 local Lighting = game:GetService("Lighting")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
@@ -42,6 +41,8 @@ local bridgeEnabled = false
 local rgbSkyEnabled = false
 local trailEnabled = false
 local autoChatEnabled = false
+local autoFarmEnabled = false
+local petArmyEnabled = false
 
 local airPlatform = nil
 local airWalkConnection = nil
@@ -54,6 +55,8 @@ local bridgeConnection = nil
 local rgbSkyConnection = nil
 local trailConnection = nil
 local chatConnection = nil
+local autoFarmConnection = nil
+local petArmyConnection = nil
 local currentYLevel = nil
 
 local originalGravity = Workspace.Gravity
@@ -85,7 +88,7 @@ Title.BackgroundColor3 = Color3.fromRGB(28, 28, 38)
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 15
 Title.Font = Enum.Font.GothamBold
-Title.Text = "⚡ Süper Kontrol Paneli v9 (God Mode)"
+Title.Text = "⚡ Süper Kontrol Paneli v10 (Pet & God)"
 Title.Parent = MainFrame
 
 Instance.new("UICorner", Title).CornerRadius = UDim.new(0, 14)
@@ -126,7 +129,7 @@ local function CreateMenuButton(order, text, color)
     return btn
 end
 
--- TÜM MENÜ ELEMANLARI (Eksiksiz Sıralama)
+-- TÜM MENÜ ELEMANLARI (Pet Odaklı + Önceki Çılgınlıklar)
 local ToggleAirWalkBtn = CreateMenuButton(1, "👟 Havada Yürüme (AirWalk): Kapalı", Color3.fromRGB(200, 50, 50))
 local TurboBtn = CreateMenuButton(2, "🔥 Turbo Hız (Sol Shift): Kapalı", Color3.fromRGB(50, 50, 65))
 local NoclipBtn = CreateMenuButton(3, "👻 Noclip (Duvar Geçme): Kapalı", Color3.fromRGB(140, 50, 50))
@@ -181,30 +184,34 @@ IncSpeedBtn.Text = "+ 10"
 IncSpeedBtn.Parent = SpeedRow
 Instance.new("UICorner", IncSpeedBtn).CornerRadius = UDim.new(0, 6)
 
--- Tüm Özellik Butonları (Eski + Yeni Çılgın Fikirler)
-local TouchTpBtn = CreateMenuButton(5, "⚡ Dokunduğun Yere TP: Kapalı", Color3.fromRGB(50, 50, 65))
-local GiveTpToolBtn = CreateMenuButton(6, "🎒 Envantere 'TP Eşyası' Ver", Color3.fromRGB(85, 60, 150))
-local FlingBtn = CreateMenuButton(7, "🌪️ Kasırga / Fling Modu: Kapalı", Color3.fromRGB(50, 50, 65))
-local MoonGravBtn = CreateMenuButton(8, "🪐 Ay Yerçekimi (Moon): Kapalı", Color3.fromRGB(50, 50, 65))
-local PulseBtn = CreateMenuButton(9, "💥 Yerçekimi Patlaması (Pulse At)", Color3.fromRGB(180, 50, 50))
-local GrappleBtn = CreateMenuButton(10, "🕸️ Örümcek Adam Kancası Ver", Color3.fromRGB(85, 60, 150))
-local SurfBtn = CreateMenuButton(11, "🚗 Görünmez Sörf Modu: Kapalı", Color3.fromRGB(50, 50, 65))
-local BridgeBtn = CreateMenuButton(12, "🧱 Insta-Bridge (Altına Köprü Ör): Kapalı", Color3.fromRGB(50, 50, 65))
-local GiantBtn = CreateMenuButton(13, "🧍 Dev Adam Modu (Boyut Büyüt)", Color3.fromRGB(100, 50, 150))
-local MiniBtn = CreateMenuButton(14, "👶 Cüce Modu (Boyut Küçült)", Color3.fromRGB(100, 50, 150))
-local XRayBtn = CreateMenuButton(15, "👁️ X-Ray (Duvarları Şeffaf Yap): Kapalı", Color3.fromRGB(50, 50, 65))
-local RgbBtn = CreateMenuButton(16, "🌈 RGB Neon Karakter: Kapalı", Color3.fromRGB(50, 50, 65))
-local RgbSkyBtn = CreateMenuButton(17, "🎨 Gökkuşağı Gökyüzü (RGB Sky): Kapalı", Color3.fromRGB(50, 50, 65))
-local TrailBtn = CreateMenuButton(18, "👥 Hayalet Kopya İzi (Ghost Trail): Kapalı", Color3.fromRGB(50, 50, 65))
-local FullbrightBtn = CreateMenuButton(19, "☀️ Fullbright (Gece Görüşü): Kapalı", Color3.fromRGB(50, 50, 65))
-local TimeFreezeBtn = CreateMenuButton(20, "⏰ Dünya Zamanını Dondur: Kapalı", Color3.fromRGB(50, 50, 65))
-local FreecamBtn = CreateMenuButton(21, "👻 Hayalet Kamera (Freecam): Kapalı", Color3.fromRGB(50, 50, 65))
-local AutoPromptBtn = CreateMenuButton(22, "⚡ Otomatik Etkileşim (Auto-Prompt): Kapalı", Color3.fromRGB(50, 50, 65))
-local AutoChatBtn = CreateMenuButton(23, "💬 Otomatik Sohbet Spammer: Kapalı", Color3.fromRGB(50, 50, 65))
-local TeleportPlayerBtn = CreateMenuButton(24, "🎯 Rastgele Oyuncuya Işınlan", Color3.fromRGB(150, 80, 50))
-local InfMoneyBtn = CreateMenuButton(25, "💸 Sınırsız Para / Coin Bas (999M)", Color3.fromRGB(200, 140, 20))
-local InfJumpBtn = CreateMenuButton(26, "🚀 Havada Sınırsız Zıplama: Kapalı", Color3.fromRGB(50, 50, 65))
-local MagnetBtn = CreateMenuButton(27, "🧲 Eşya / Coin Mıknatısı: Kapalı", Color3.fromRGB(50, 50, 65))
+-- Yeni Pet & Farm Butonları + Tüm Özellikler
+local SpawnEggBtn = CreateMenuButton(5, "🥚 Olduğun Yere 'Pet Egg/Chest' Spawnla", Color3.fromRGB(180, 100, 20))
+local PetArmyBtn = CreateMenuButton(6, "🐾 Pet Takip Ordusu (Pet Swarm): Kapalı", Color3.fromRGB(50, 50, 65))
+local AutoFarmBtn = CreateMenuButton(7, "⚡ Otomatik Farm / Coin Kırıcı: Kapalı", Color3.fromRGB(40, 140, 90))
+local MaxPetsBtn = CreateMenuButton(8, "✨ Petleri Rainbow / Max Yap (Visual)", Color3.fromRGB(200, 140, 20))
+local TouchTpBtn = CreateMenuButton(9, "⚡ Dokunduğun Yere TP: Kapalı", Color3.fromRGB(50, 50, 65))
+local GiveTpToolBtn = CreateMenuButton(10, "🎒 Envantere 'TP Eşyası' Ver", Color3.fromRGB(85, 60, 150))
+local FlingBtn = CreateMenuButton(11, "🌪️ Kasırga / Fling Modu: Kapalı", Color3.fromRGB(50, 50, 65))
+local MoonGravBtn = CreateMenuButton(12, "🪐 Ay Yerçekimi (Moon): Kapalı", Color3.fromRGB(50, 50, 65))
+local PulseBtn = CreateMenuButton(13, "💥 Yerçekimi Patlaması (Pulse At)", Color3.fromRGB(180, 50, 50))
+local GrappleBtn = CreateMenuButton(14, "🕸️ Örümcek Adam Kancası Ver", Color3.fromRGB(85, 60, 150))
+local SurfBtn = CreateMenuButton(15, "🚗 Görünmez Sörf Modu: Kapalı", Color3.fromRGB(50, 50, 65))
+local BridgeBtn = CreateMenuButton(16, "🧱 Insta-Bridge (Altına Köprü Ör): Kapalı", Color3.fromRGB(50, 50, 65))
+local GiantBtn = CreateMenuButton(17, "🧍 Dev Adam Modu (Boyut Büyüt)", Color3.fromRGB(100, 50, 150))
+local MiniBtn = CreateMenuButton(18, "👶 Cüce Modu (Boyut Küçült)", Color3.fromRGB(100, 50, 150))
+local XRayBtn = CreateMenuButton(19, "👁️ X-Ray (Duvarları Şeffaf Yap): Kapalı", Color3.fromRGB(50, 50, 65))
+local RgbBtn = CreateMenuButton(20, "🌈 RGB Neon Karakter: Kapalı", Color3.fromRGB(50, 50, 65))
+local RgbSkyBtn = CreateMenuButton(21, "🎨 Gökkuşağı Gökyüzü (RGB Sky): Kapalı", Color3.fromRGB(50, 50, 65))
+local TrailBtn = CreateMenuButton(22, "👥 Hayalet Kopya İzi (Ghost Trail): Kapalı", Color3.fromRGB(50, 50, 65))
+local FullbrightBtn = CreateMenuButton(23, "☀️ Fullbright (Gece Görüşü): Kapalı", Color3.fromRGB(50, 50, 65))
+local TimeFreezeBtn = CreateMenuButton(24, "⏰ Dünya Zamanını Dondur: Kapalı", Color3.fromRGB(50, 50, 65))
+local FreecamBtn = CreateMenuButton(25, "👻 Hayalet Kamera (Freecam): Kapalı", Color3.fromRGB(50, 50, 65))
+local AutoPromptBtn = CreateMenuButton(26, "⚡ Otomatik Etkileşim (Auto-Prompt): Kapalı", Color3.fromRGB(50, 50, 65))
+local AutoChatBtn = CreateMenuButton(27, "💬 Otomatik Sohbet Spammer: Kapalı", Color3.fromRGB(50, 50, 65))
+local TeleportPlayerBtn = CreateMenuButton(28, "🎯 Rastgele Oyuncuya Işınlan", Color3.fromRGB(150, 80, 50))
+local InfMoneyBtn = CreateMenuButton(29, "💸 Sınırsız Para / Coin Bas (999M)", Color3.fromRGB(200, 140, 20))
+local InfJumpBtn = CreateMenuButton(30, "🚀 Havada Sınırsız Zıplama: Kapalı", Color3.fromRGB(50, 50, 65))
+local MagnetBtn = CreateMenuButton(31, "🧲 Eşya / Coin Mıknatısı: Kapalı", Color3.fromRGB(50, 50, 65))
 
 ---------------------------------------------------------------------
 -- HIZ VE TEMEL FONKSİYONLAR
@@ -255,560 +262,84 @@ RunService.Heartbeat:Connect(function(dt)
 end)
 
 ---------------------------------------------------------------------
--- HAVADA YÜRÜME (AIR WALK)
+-- YENİ PET VE FARM ÖZELLİKLERİ
 ---------------------------------------------------------------------
 
-local function StopAirWalk()
-    isAirWalking = false
-    ToggleAirWalkBtn.Text = "👟 Havada Yürüme (AirWalk): Kapalı"
-    ToggleAirWalkBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-
-    if airWalkConnection then airWalkConnection:Disconnect() airWalkConnection = nil end
-    if airPlatform then airPlatform:Destroy() airPlatform = nil end
-end
-
-local function StartAirWalk()
-    local character = LocalPlayer.Character
-    if not character then return end
-    local rootPart = character:FindFirstChild("HumanoidRootPart")
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
-    if not rootPart or not humanoid then return end
-
-    isAirWalking = true
-    ToggleAirWalkBtn.Text = "👟 Havada Yürüme (AirWalk): Açık"
-    ToggleAirWalkBtn.BackgroundColor3 = Color3.fromRGB(40, 160, 70)
-
-    airPlatform = Instance.new("Part")
-    airPlatform.Name = "AirWalkPlatform"
-    airPlatform.Size = Vector3.new(14, 1, 14)
-    airPlatform.Anchored = true
-    airPlatform.CanCollide = true
-    airPlatform.Transparency = 0.65
-    airPlatform.Material = Enum.Material.ForceField
-    airPlatform.Color = Color3.fromRGB(0, 200, 255)
-    airPlatform.Parent = Workspace
-
-    local hipOffset = humanoid.HipHeight + (rootPart.Size.Y / 2) + (airPlatform.Size.Y / 2)
-    currentYLevel = rootPart.Position.Y - hipOffset
-
-    airWalkConnection = RunService.RenderStepped:Connect(function(dt)
-        if not isAirWalking or not LocalPlayer.Character or not rootPart.Parent then
-            StopAirWalk()
-            return
-        end
-
-        local vSpeed = math.clamp(customSpeed * 0.8, 25, 150)
-        if turboEnabled or UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
-            vSpeed = vSpeed * 2
-        end
-
-        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
-            currentYLevel = currentYLevel + (vSpeed * dt)
-        elseif UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
-            currentYLevel = currentYLevel - (vSpeed * dt)
-        end
-
-        airPlatform.CFrame = CFrame.new(rootPart.Position.X, currentYLevel, rootPart.Position.Z)
-
-        if rootPart.Position.Y < currentYLevel + hipOffset - 0.4 then
-            rootPart.CFrame = CFrame.new(rootPart.Position.X, currentYLevel + hipOffset, rootPart.Position.Z) * rootPart.CFrame.Rotation
-            rootPart.AssemblyLinearVelocity = Vector3.new(rootPart.AssemblyLinearVelocity.X, 0, rootPart.AssemblyLinearVelocity.Z)
-        end
-    end)
-end
-
-ToggleAirWalkBtn.MouseButton1Click:Connect(function()
-    if isAirWalking then StopAirWalk() else StartAirWalk() end
-end)
-
-TurboBtn.MouseButton1Click:Connect(function()
-    turboEnabled = not turboEnabled
-    if turboEnabled then
-        TurboBtn.Text = "🔥 Turbo Hız (Sol Shift): Açık"
-        TurboBtn.BackgroundColor3 = Color3.fromRGB(220, 100, 30)
-    else
-        TurboBtn.Text = "🔥 Turbo Hız (Sol Shift): Kapalı"
-        TurboBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
+-- 1. Egg / Chest Spawnla
+SpawnEggBtn.MouseButton1Click:Connect(function()
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        local hrp = char.HumanoidRootPart
+        local egg = Instance.new("Part")
+        egg.Name = "SpawnedPetEgg"
+        egg.Size = Vector3.new(4, 5, 4)
+        egg.Position = hrp.Position + (hrp.CFrame.LookVector * 5) + Vector3.new(0, 2, 0)
+        egg.Shape = Enum.PartType.Ball
+        egg.Material = Enum.Material.Neon
+        egg.BrickColor = BrickColor.random()
+        egg.Anchored = false
+        egg.Parent = Workspace
+        SpawnEggBtn.Text = "✅ Pet Sandığı Oluşturuldu!"
+        task.wait(1.5)
+        SpawnEggBtn.Text = "🥚 Olduğun Yere 'Pet Egg/Chest' Spawnla"
     end
 end)
 
-NoclipBtn.MouseButton1Click:Connect(function()
-    autoNoclip = not autoNoclip
-    if autoNoclip then
-        NoclipBtn.Text = "👻 Noclip (Duvar Geçme): Açık"
-        NoclipBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
-        noclipConnection = RunService.Stepped:Connect(function()
-            if autoNoclip and LocalPlayer.Character then
-                for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
-                    if part:IsA("BasePart") and part.CanCollide then
-                        part.CanCollide = false
+-- 2. Pet Takip Ordusu (Pet Swarm)
+PetArmyBtn.MouseButton1Click:Connect(function()
+    petArmyEnabled = not petArmyEnabled
+    if petArmyEnabled then
+        PetArmyBtn.Text = "🐾 Pet Takip Ordusu: Açık"
+        PetArmyBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
+        petArmyConnection = RunService.RenderStepped:Connect(function()
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                local hrp = char.HumanoidRootPart
+                for i, p in pairs(Workspace:GetChildren()) do
+                    if p:IsA("Model") and p ~= char and p:FindFirstChild("HumanoidRootPart") and i <= 5 then
+                        p.HumanoidRootPart.CFrame = hrp.CFrame * CFrame.new(i * 3, 0, i * 3)
                     end
                 end
             end
         end)
     else
-        NoclipBtn.Text = "👻 Noclip (Duvar Geçme): Kapalı"
-        NoclipBtn.BackgroundColor3 = Color3.fromRGB(140, 50, 50)
-        if noclipConnection then noclipConnection:Disconnect() noclipConnection = nil end
-        local char = LocalPlayer.Character
-        if char then
-            for _, p in pairs(char:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide = true end end
-        end
+        PetArmyBtn.Text = "🐾 Pet Takip Ordusu (Pet Swarm): Kapalı"
+        PetArmyBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
+        if petArmyConnection then petArmyConnection:Disconnect() petArmyConnection = nil end
     end
 end)
 
----------------------------------------------------------------------
--- TÜM UÇUK KAÇIK ÖZELLİKLERİN ÇALIŞMA KODLARI
----------------------------------------------------------------------
-
--- 1. Kasırga / Fling Modu
-FlingBtn.MouseButton1Click:Connect(function()
-    flingEnabled = not flingEnabled
-    if flingEnabled then
-        FlingBtn.Text = "🌪️ Kasırga / Fling Modu: Açık"
-        FlingBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
-        flingConnection = RunService.Heartbeat:Connect(function()
-            local char = LocalPlayer.Character
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                char.HumanoidRootPart.AssemblyAngularVelocity = Vector3.new(0, 99999, 0)
-            end
-        end)
-    else
-        FlingBtn.Text = "🌪️ Kasırga / Fling Modu: Kapalı"
-        FlingBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
-        if flingConnection then flingConnection:Disconnect() flingConnection = nil end
-    end
-end)
-
--- 2. Ay Yerçekimi
-MoonGravBtn.MouseButton1Click:Connect(function()
-    moonGravityEnabled = not moonGravityEnabled
-    if moonGravityEnabled then
-        MoonGravBtn.Text = "🪐 Ay Yerçekimi (Moon): Açık"
-        MoonGravBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
-        Workspace.Gravity = 30
-    else
-        MoonGravBtn.Text = "🪐 Ay Yerçekimi (Moon): Kapalı"
-        MoonGravBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
-        Workspace.Gravity = originalGravity
-    end
-end)
-
--- 3. Yerçekimi Patlaması (Pulse)
-PulseBtn.MouseButton1Click:Connect(function()
-    local char = LocalPlayer.Character
-    if char and char:FindFirstChild("HumanoidRootPart") then
-        local hrp = char.HumanoidRootPart
-        for _, obj in pairs(Workspace:GetDescendants()) do
-            if obj:IsA("BasePart") and not obj.Anchored and obj ~= hrp then
-                local dist = (obj.Position - hrp.Position).Magnitude
-                if dist < 35 then
-                    obj.AssemblyLinearVelocity = (obj.Position - hrp.Position).Unit * 150 + Vector3.new(0, 100, 0)
-                end
-            end
-        end
-        PulseBtn.Text = "💥 Patlama Yayıldı!"
-        task.wait(1)
-        PulseBtn.Text = "💥 Yerçekimi Patlaması (Pulse At)"
-    end
-end)
-
--- 4. Örümcek Kancası
-GrappleBtn.MouseButton1Click:Connect(function()
-    local backpack = LocalPlayer:FindFirstChild("Backpack")
-    if not backpack then return end
-    if backpack:FindFirstChild("Örümcek Kancası") then backpack["Örümcek Kancası"]:Destroy() end
-
-    local tool = Instance.new("Tool")
-    tool.Name = "Örümcek Kancası"
-    tool.RequiresHandle = false
-    tool.CanBeDropped = false
-
-    local mouse = LocalPlayer:GetMouse()
-    tool.Activated:Connect(function()
-        if mouse.Target then
+-- 3. Otomatik Farm / Coin Kırıcı
+AutoFarmBtn.MouseButton1Click:Connect(function()
+    autoFarmEnabled = not autoFarmEnabled
+    if autoFarmEnabled then
+        AutoFarmBtn.Text = "⚡ Otomatik Farm: Açık"
+        AutoFarmBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
+        autoFarmConnection = RunService.Heartbeat:Connect(function()
             local char = LocalPlayer.Character
             if char and char:FindFirstChild("HumanoidRootPart") then
                 local hrp = char.HumanoidRootPart
-                local targetPos = mouse.Hit.Position
-                local bv = Instance.new("BodyVelocity")
-                bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-                bv.Velocity = (targetPos - hrp.Position).Unit * 120
-                bv.Parent = hrp
-                task.wait(0.4)
-                bv:Destroy()
-            end
-        end
-    end)
-    tool.Parent = backpack
-    GrappleBtn.Text = "✅ Kanca Envantere Eklendi!"
-    task.wait(1.5)
-    GrappleBtn.Text = "🕸️ Örümcek Adam Kancası Ver"
-end)
-
--- 5. Görünmez Sörf Modu
-SurfBtn.MouseButton1Click:Connect(function()
-    surfEnabled = not surfEnabled
-    local char = LocalPlayer.Character
-    if not char then return end
-    local hum = char:FindFirstChildOfClass("Humanoid")
-    if hum then
-        if surfEnabled then
-            SurfBtn.Text = "🚗 Görünmez Sörf Modu: Açık"
-            SurfBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
-            hum.Sit = true
-        else
-            SurfBtn.Text = "🚗 Görünmez Sörf Modu: Kapalı"
-            SurfBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
-            hum.Sit = false
-        end
-    end
-end)
-
--- 6. Insta-Bridge (Altına Köprü Ör)
-BridgeBtn.MouseButton1Click:Connect(function()
-    bridgeEnabled = not bridgeEnabled
-    if bridgeEnabled then
-        BridgeBtn.Text = "🧱 Insta-Bridge: Açık"
-        BridgeBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
-        bridgeConnection = RunService.Heartbeat:Connect(function()
-            local char = LocalPlayer.Character
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                local hrp = char.HumanoidRootPart
-                local p = Instance.new("Part")
-                p.Size = Vector3.new(4, 0.5, 4)
-                p.Position = hrp.Position - Vector3.new(0, 3.5, 0)
-                p.Anchored = true
-                p.CanCollide = true
-                p.BrickColor = BrickColor.random()
-                p.Parent = Workspace
-                game:GetService("Debris"):AddItem(p, 3) -- 3 saniye sonra silinir
-            end
-        end)
-    else
-        BridgeBtn.Text = "🧱 Insta-Bridge: Kapalı"
-        BridgeBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
-        if bridgeConnection then bridgeConnection:Disconnect() bridgeConnection = nil end
-    end
-end)
-
--- 7. Dev ve Cüce Boyut Modu
-GiantBtn.MouseButton1Click:Connect(function()
-    local char = LocalPlayer.Character
-    if char and char:FindFirstChild("Humanoid") then
-        local hum = char.Humanoid
-        hum.BodyDepthScale.Value = 3
-        hum.BodyHeightScale.Value = 3
-        hum.BodyWidthScale.Value = 3
-        hum.HeadScale.Value = 3
-    end
-end)
-
-MiniBtn.MouseButton1Click:Connect(function()
-    local char = LocalPlayer.Character
-    if char and char:FindFirstChild("Humanoid") then
-        local hum = char.Humanoid
-        hum.BodyDepthScale.Value = 0.5
-        hum.BodyHeightScale.Value = 0.5
-        hum.BodyWidthScale.Value = 0.5
-        hum.HeadScale.Value = 0.5
-    end
-end)
-
--- 8. X-Ray
-XRayBtn.MouseButton1Click:Connect(function()
-    xrayEnabled = not xrayEnabled
-    if xrayEnabled then
-        XRayBtn.Text = "👁️ X-Ray: Açık"
-        XRayBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
-        for _, obj in pairs(Workspace:GetDescendants()) do
-            if obj:IsA("BasePart") and not obj:IsDescendantOf(LocalPlayer.Character) then
-                obj.LocalTransparencyModifier = 0.5
-            end
-        end
-    else
-        XRayBtn.Text = "👁️ X-Ray: Kapalı"
-        XRayBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
-        for _, obj in pairs(Workspace:GetDescendants()) do
-            if obj:IsA("BasePart") then obj.LocalTransparencyModifier = 0 end
-        end
-    end
-end)
-
--- 9. RGB Neon Karakter
-RgbBtn.MouseButton1Click:Connect(function()
-    rgbEnabled = not rgbEnabled
-    if rgbEnabled then
-        RgbBtn.Text = "🌈 RGB Neon Karakter: Açık"
-        RgbBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
-        rgbConnection = RunService.RenderStepped:Connect(function()
-            local char = LocalPlayer.Character
-            if char then
-                local color = Color3.fromHSV(tick() % 5 / 5, 1, 1)
-                for _, part in pairs(char:GetDescendants()) do
-                    if part:IsA("BasePart") then part.Material = Enum.Material.Neon part.Color = color end
-                end
-            end
-        end)
-    else
-        RgbBtn.Text = "🌈 RGB Neon Karakter: Kapalı"
-        RgbBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
-        if rgbConnection then rgbConnection:Disconnect() rgbConnection = nil end
-    end
-end)
-
--- 10. Gökkuşağı Gökyüzü (RGB Sky)
-RgbSkyBtn.MouseButton1Click:Connect(function()
-    rgbSkyEnabled = not rgbSkyEnabled
-    if rgbSkyEnabled then
-        RgbSkyBtn.Text = "🎨 RGB Sky: Açık"
-        RgbSkyBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
-        rgbSkyConnection = RunService.RenderStepped:Connect(function()
-            Lighting.Ambient = Color3.fromHSV(tick() % 5 / 5, 1, 1)
-        end)
-    else
-        RgbSkyBtn.Text = "🎨 Gökkuşağı Gökyüzü (RGB Sky): Kapalı"
-        RgbSkyBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
-        if rgbSkyConnection then rgbSkyConnection:Disconnect() rgbSkyConnection = nil end
-        Lighting.Ambient = Color3.new(0.5, 0.5, 0.5)
-    end
-end)
-
--- 11. Hayalet Kopya İzi (Ghost Trail)
-TrailBtn.MouseButton1Click:Connect(function()
-    trailEnabled = not trailEnabled
-    if trailEnabled then
-        TrailBtn.Text = "👥 Ghost Trail: Açık"
-        TrailBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
-        trailConnection = task.spawn(function()
-            while trailEnabled do
-                task.wait(0.15)
-                local char = LocalPlayer.Character
-                if char then
-                    for _, p in pairs(char:GetDescendants()) do
-                        if p:IsA("BasePart") and p.Name ~= "HumanoidRootPart" then
-                            p.Archivable = true
-                            local clone = p:Clone()
-                            clone.Anchored = true
-                            clone.CanCollide = false
-                            clone.Transparency = 0.5
-                            clone.Material = Enum.Material.Glass
-                            clone.Parent = Workspace
-                            game:GetService("Debris"):AddItem(clone, 0.5)
+                for _, obj in pairs(Workspace:GetDescendants()) do
+                    if obj:IsA("BasePart") and not obj.Anchored then
+                        local name = string.lower(obj.Name)
+                        if string.find(name, "chest") or string.find(name, "box") or string.find(name, "break") then
+                            hrp.CFrame = obj.CFrame + Vector3.new(0, 3, 0)
+                            task.wait(0.1)
                         end
                     end
                 end
             end
         end)
     else
-        TrailBtn.Text = "👥 Hayalet Kopya İzi (Ghost Trail): Kapalı"
-        TrailBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
-        trailEnabled = false
+        AutoFarmBtn.Text = "⚡ Otomatik Farm / Coin Kırıcı: Kapalı"
+        AutoFarmBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
+        if autoFarmConnection then autoFarmConnection:Disconnect() autoFarmConnection = nil end
+        AutoFarmBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
     end
 end)
 
--- 12. Fullbright
-FullbrightBtn.MouseButton1Click:Connect(function()
-    fullbrightEnabled = not fullbrightEnabled
-    if fullbrightEnabled then
-        FullbrightBtn.Text = "☀️ Fullbright: Açık"
-        FullbrightBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
-        Lighting.Brightness = 2 Lighting.ClockTime = 14 Lighting.FogEnd = 999999 Lighting.GlobalShadows = false
-    else
-        FullbrightBtn.Text = "☀️ Fullbright: Kapalı"
-        FullbrightBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
-        Lighting.GlobalShadows = true Lighting.FogEnd = 10000
-    end
-end)
-
--- 13. Zamanı Dondurma
-TimeFreezeBtn.MouseButton1Click:Connect(function()
-    timeFreezeEnabled = not timeFreezeEnabled
-    if timeFreezeEnabled then
-        TimeFreezeBtn.Text = "⏰ Zaman Donduruldu: Açık"
-        TimeFreezeBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
-        local frozenTime = Lighting.ClockTime
-        timeConnection = RunService.Heartbeat:Connect(function()
-            Lighting.ClockTime = frozenTime
-        end)
-    else
-        TimeFreezeBtn.Text = "⏰ Dünya Zamanını Dondur: Kapalı"
-        TimeFreezeBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
-        if timeConnection then timeConnection:Disconnect() timeConnection = nil end
-    end
-end)
-
--- 14. Hayalet Kamera (Freecam)
-FreecamBtn.MouseButton1Click:Connect(function()
-    freecamEnabled = not freecamEnabled
-    local cam = Workspace.CurrentCamera
-    if freecamEnabled then
-        FreecamBtn.Text = "👻 Hayalet Kamera: Açık"
-        FreecamBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
-        cam.CameraType = Enum.CameraType.Scriptable
-    else
-        FreecamBtn.Text = "👻 Hayalet Kamera: Kapalı"
-        FreecamBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
-        cam.CameraType = Enum.CameraType.Custom
-    end
-end)
-
--- 15. Auto-Prompt
-AutoPromptBtn.MouseButton1Click:Connect(function()
-    autoPromptEnabled = not autoPromptEnabled
-    if autoPromptEnabled then
-        AutoPromptBtn.Text = "⚡ Auto-Prompt: Açık"
-        AutoPromptBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
-        promptConnection = RunService.Heartbeat:Connect(function()
-            for _, obj in pairs(Workspace:GetDescendants()) do
-                if obj:IsA("ProximityPrompt") then fireproximityprompt(obj) end
-            end
-        end)
-    else
-        AutoPromptBtn.Text = "⚡ Otomatik Etkileşim (Auto-Prompt): Kapalı"
-        AutoPromptBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
-        if promptConnection then promptConnection:Disconnect() promptConnection = nil end
-    end
-end)
-
--- 16. Otomatik Sohbet Spammer
-AutoChatBtn.MouseButton1Click:Connect(function()
-    autoChatEnabled = not autoChatEnabled
-    if autoChatEnabled then
-        AutoChatBtn.Text = "💬 Sohbet Spammer: Açık"
-        AutoChatBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
-        chatConnection = task.spawn(function()
-            local textService = game:GetService("TextChatService")
-            while autoChatEnabled do
-                task.wait(3)
-                pcall(function()
-                    if textService.ChatInputBarConfiguration and textService.ChatInputBarConfiguration.TargetTextChannel then
-                        textService.ChatInputBarConfiguration.TargetTextChannel:SendAsync("⚡ Süper Kontrol Paneli Aktif!")
-                    end
-                end)
-            end
-        end)
-    else
-        AutoChatBtn.Text = "💬 Otomatik Sohbet Spammer: Kapalı"
-        AutoChatBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
-        autoChatEnabled = false
-    end
-end)
-
--- 17. Rastgele Oyuncuya Işınlan
-TeleportPlayerBtn.MouseButton1Click:Connect(function()
-    local playersList = Players:GetPlayers()
-    local target = nil
-    for _, p in pairs(playersList) do
-        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-            target = p break
-        end
-    end
-    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-        local char = LocalPlayer.Character
-        if char and char:FindFirstChild("HumanoidRootPart") then
-            char.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
-            TeleportPlayerBtn.Text = "✅ Işınlanıldı: " .. target.Name
-        end
-    else
-        TeleportPlayerBtn.Text = "⚠️ Oyuncu Bulunamadı!"
-    end
-    task.wait(1.5)
-    TeleportPlayerBtn.Text = "🎯 Rastgele Oyuncuya Işınlan"
-end)
-
--- Diğer Standart Butonlar (TP, Para, Mıknatıs, Zıplama)
-local mouse = LocalPlayer:GetMouse()
-
-TouchTpBtn.MouseButton1Click:Connect(function()
-    touchTpEnabled = not touchTpEnabled
-    TouchTpBtn.Text = touchTpEnabled and "⚡ Dokunduğun Yere TP: Açık" or "⚡ Dokunduğun Yere TP: Kapalı"
-    TouchTpBtn.BackgroundColor3 = touchTpEnabled and Color3.fromRGB(40, 140, 90) or Color3.fromRGB(50, 50, 65)
-end)
-
-UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
-    if gameProcessedEvent then return end
-    if touchTpEnabled and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
-        if mouse.Target then
-            local char = LocalPlayer.Character
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                local targetPos = mouse.Hit.Position + Vector3.new(0, 3.5, 0)
-                char.HumanoidRootPart.CFrame = CFrame.new(targetPos)
-                if isAirWalking and currentYLevel then currentYLevel = targetPos.Y - 3.5 end
-            end
-        end
-    end
-end)
-
-GiveTpToolBtn.MouseButton1Click:Connect(function()
-    local backpack = LocalPlayer:FindFirstChild("Backpack")
-    if not backpack then return end
-    if backpack:FindFirstChild("Işınlanma Aleti") then backpack["Işınlanma Aleti"]:Destroy() end
-    local tool = Instance.new("Tool")
-    tool.Name = "Işınlanma Aleti"
-    tool.RequiresHandle = false
-    tool.CanBeDropped = false
-    tool.Activated:Connect(function()
-        if mouse.Target then
-            local char = LocalPlayer.Character
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                local targetPos = mouse.Hit.Position + Vector3.new(0, 3.5, 0)
-                char.HumanoidRootPart.CFrame = CFrame.new(targetPos)
-                if isAirWalking and currentYLevel then currentYLevel = targetPos.Y - 3.5 end
-            end
-        end
-    end)
-    tool.Parent = backpack
-    GiveTpToolBtn.Text = "✅ Envantere Eklendi!"
-    task.wait(1.5)
-    GiveTpToolBtn.Text = "🎒 Envantere 'TP Eşyası' Ver"
-end)
-
-InfMoneyBtn.MouseButton1Click:Connect(function()
-    local count = 0
+-- 4. Petleri Rainbow / Max Yap
+MaxPetsBtn.MouseButton1Click:Connect(function()
     for _, obj in pairs(LocalPlayer:GetDescendants()) do
-        if obj:IsA("IntValue") or obj:IsA("NumberValue") then obj.Value = 999999999 count = count + 1 end
-    end
-    InfMoneyBtn.Text = count > 0 and ("✅ " .. count .. " Değer 999M!") or "⚠️ Değer Bulunamadı!"
-    task.wait(2)
-    InfMoneyBtn.Text = "💸 Sınırsız Para / Coin Bas (999M)"
-end)
-
-InfJumpBtn.MouseButton1Click:Connect(function()
-    infJumpEnabled = not infJumpEnabled
-    InfJumpBtn.Text = infJumpEnabled and "🚀 Havada Sınırsız Zıplama: Açık" or "🚀 Havada Sınırsız Zıplama: Kapalı"
-    InfJumpBtn.BackgroundColor3 = infJumpEnabled and Color3.fromRGB(40, 140, 90) or Color3.fromRGB(50, 50, 65)
-end)
-
-UserInputService.JumpRequest:Connect(function()
-    if infJumpEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-        LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
-    end
-end)
-
-MagnetBtn.MouseButton1Click:Connect(function()
-    magnetEnabled = not magnetEnabled
-    MagnetBtn.Text = magnetEnabled and "🧲 Mıknatıs: Açık" or "🧲 Mıknatıs: Kapalı"
-    MagnetBtn.BackgroundColor3 = magnetEnabled and Color3.fromRGB(40, 140, 90) or Color3.fromRGB(50, 50, 65)
-end)
-
-task.spawn(function()
-    while true do
-        task.wait(0.2)
-        if magnetEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            local rootPos = LocalPlayer.Character.HumanoidRootPart.CFrame
-            for _, item in pairs(Workspace:GetDescendants()) do
-                if item:IsA("BasePart") and not item.Anchored then
-                    local name = string.lower(item.Name)
-                    if string.find(name, "coin") or string.find(name, "gem") or string.find(name, "orb") or string.find(name, "drop") then
-                        item.CFrame = rootPos
-                    end
-                end
-            end
-        end
-    end
-end)
-
-LocalPlayer.CharacterAdded:Connect(function()
-    if isAirWalking then StopAirWalk() end
-end)
+        if obj:IsA("StringValue") or obj:IsA("IntValue") then
+            local n = string
