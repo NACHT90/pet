@@ -1,4 +1,4 @@
--- Süper Kontrol Paneli v7 (Otomatik Boyutlandırılan Kaydırma Alanı + Tüm Özellikler)
+-- Süper Kontrol Paneli v8 (Tüm Uçuk Kaçık ve Görsel Özellikler Eksiksiz)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -30,6 +30,7 @@ local touchTpEnabled = false
 
 local flingEnabled = false
 local moonGravityEnabled = false
+local surfEnabled = false
 local xrayEnabled = false
 local rgbEnabled = false
 local fullbrightEnabled = false
@@ -55,8 +56,8 @@ ScreenGui.ResetOnSpawn = false
 -- Ana Çerçeve
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 320, 0, 440)
-MainFrame.Position = UDim2.new(0.5, -160, 0.5, -220)
+MainFrame.Size = UDim2.new(0, 330, 0, 450)
+MainFrame.Position = UDim2.new(0.5, -165, 0.5, -225)
 MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
@@ -72,7 +73,7 @@ Title.BackgroundColor3 = Color3.fromRGB(28, 28, 38)
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 15
 Title.Font = Enum.Font.GothamBold
-Title.Text = "⚡ Süper Kontrol Paneli v7 (Ultimate)"
+Title.Text = "⚡ Süper Kontrol Paneli v8 (Ultimate)"
 Title.Parent = MainFrame
 
 Instance.new("UICorner", Title).CornerRadius = UDim.new(0, 14)
@@ -92,7 +93,7 @@ ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 ListLayout.Padding = UDim.new(0, 8)
 ListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
--- ÖNEMLİ: Butonlar eklendikçe kaydırma alanını otomatik büyütür (Hiçbir özellik kaybolmaz!)
+-- Otomatik Boyutlandırma
 ListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y + 15)
 end)
@@ -113,7 +114,7 @@ local function CreateMenuButton(order, text, color)
     return btn
 end
 
--- TÜM MENÜ ELEMANLARI (Sırasıyla Eksiksiz)
+-- TÜM MENÜ ELEMANLARI (Eksiksiz Sıralama)
 local ToggleAirWalkBtn = CreateMenuButton(1, "👟 Havada Yürüme (AirWalk): Kapalı", Color3.fromRGB(200, 50, 50))
 local TurboBtn = CreateMenuButton(2, "🔥 Turbo Hız (Sol Shift): Kapalı", Color3.fromRGB(50, 50, 65))
 local NoclipBtn = CreateMenuButton(3, "👻 Noclip (Duvar Geçme): Kapalı", Color3.fromRGB(140, 50, 50))
@@ -168,20 +169,22 @@ IncSpeedBtn.Text = "+ 10"
 IncSpeedBtn.Parent = SpeedRow
 Instance.new("UICorner", IncSpeedBtn).CornerRadius = UDim.new(0, 6)
 
--- Tüm Uçuk Kaçık Özellik Butonları
+-- Tüm Yeni ve İstediğin Özel Özellik Butonları
 local TouchTpBtn = CreateMenuButton(5, "⚡ Dokunduğun Yere TP: Kapalı", Color3.fromRGB(50, 50, 65))
 local GiveTpToolBtn = CreateMenuButton(6, "🎒 Envantere 'TP Eşyası' Ver", Color3.fromRGB(85, 60, 150))
 local FlingBtn = CreateMenuButton(7, "🌪️ Kasırga / Fling Modu: Kapalı", Color3.fromRGB(50, 50, 65))
 local MoonGravBtn = CreateMenuButton(8, "🪐 Ay Yerçekimi (Moon): Kapalı", Color3.fromRGB(50, 50, 65))
 local GrappleBtn = CreateMenuButton(9, "🕸️ Örümcek Adam Kancası Ver", Color3.fromRGB(85, 60, 150))
-local XRayBtn = CreateMenuButton(10, "👁️ X-Ray (Duvarları Şeffaf Yap): Kapalı", Color3.fromRGB(50, 50, 65))
-local RgbBtn = CreateMenuButton(11, "🌈 RGB Neon Karakter: Kapalı", Color3.fromRGB(50, 50, 65))
-local FullbrightBtn = CreateMenuButton(12, "☀️ Fullbright (Gece Görüşü): Kapalı", Color3.fromRGB(50, 50, 65))
-local FreecamBtn = CreateMenuButton(13, "👻 Hayalet Kamera (Freecam): Kapalı", Color3.fromRGB(50, 50, 65))
-local AutoPromptBtn = CreateMenuButton(14, "⚡ Otomatik Etkileşim (Auto-Prompt): Kapalı", Color3.fromRGB(50, 50, 65))
-local InfMoneyBtn = CreateMenuButton(15, "💸 Sınırsız Para / Coin Bas (999M)", Color3.fromRGB(200, 140, 20))
-local InfJumpBtn = CreateMenuButton(16, "🚀 Havada Sınırsız Zıplama: Kapalı", Color3.fromRGB(50, 50, 65))
-local MagnetBtn = CreateMenuButton(17, "🧲 Eşya / Coin Mıknatısı: Kapalı", Color3.fromRGB(50, 50, 65))
+local SurfBtn = CreateMenuButton(10, "🚗 Görünmez Araba / Sörf Modu: Kapalı", Color3.fromRGB(50, 50, 65))
+local XRayBtn = CreateMenuButton(11, "👁️ X-Ray (Duvarları Şeffaf Yap): Kapalı", Color3.fromRGB(50, 50, 65))
+local RgbBtn = CreateMenuButton(12, "🌈 RGB Neon Karakter: Kapalı", Color3.fromRGB(50, 50, 65))
+local FullbrightBtn = CreateMenuButton(13, "☀️ Fullbright (Gece Görüşü): Kapalı", Color3.fromRGB(50, 50, 65))
+local FreecamBtn = CreateMenuButton(14, "👻 Hayalet Kamera (Freecam): Kapalı", Color3.fromRGB(50, 50, 65))
+local AutoPromptBtn = CreateMenuButton(15, "⚡ Otomatik Etkileşim (Auto-Prompt): Kapalı", Color3.fromRGB(50, 50, 65))
+local TeleportPlayerBtn = CreateMenuButton(16, "🎯 Rastgele Oyuncuya Işınlan", Color3.fromRGB(150, 80, 50))
+local InfMoneyBtn = CreateMenuButton(17, "💸 Sınırsız Para / Coin Bas (999M)", Color3.fromRGB(200, 140, 20))
+local InfJumpBtn = CreateMenuButton(18, "🚀 Havada Sınırsız Zıplama: Kapalı", Color3.fromRGB(50, 50, 65))
+local MagnetBtn = CreateMenuButton(19, "🧲 Eşya / Coin Mıknatısı: Kapalı", Color3.fromRGB(50, 50, 65))
 
 ---------------------------------------------------------------------
 -- HIZ VE TEMEL FONKSİYONLAR
@@ -335,7 +338,311 @@ NoclipBtn.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------------------
--- UÇUK KAÇIK ÖZELLİKLERİN ÇALIŞMA MEKANİZMALARI
+-- YENİ EKLENEN ÖZELLİKLERİN ÇALIŞMA MEKANİZMALARI
 ---------------------------------------------------------------------
 
--- 1. Kasırga / F
+-- 1. Kasırga / Fling Modu
+FlingBtn.MouseButton1Click:Connect(function()
+    flingEnabled = not flingEnabled
+    if flingEnabled then
+        FlingBtn.Text = "🌪️ Kasırga / Fling Modu: Açık"
+        FlingBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
+        flingConnection = RunService.Heartbeat:Connect(function()
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                char.HumanoidRootPart.AssemblyAngularVelocity = Vector3.new(0, 99999, 0)
+            end
+        end)
+    else
+        FlingBtn.Text = "🌪️ Kasırga / Fling Modu: Kapalı"
+        FlingBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
+        if flingConnection then flingConnection:Disconnect() flingConnection = nil end
+    end
+end)
+
+-- 2. Ay Yerçekimi (Moon Gravity)
+MoonGravBtn.MouseButton1Click:Connect(function()
+    moonGravityEnabled = not moonGravityEnabled
+    if moonGravityEnabled then
+        MoonGravBtn.Text = "🪐 Ay Yerçekimi (Moon): Açık"
+        MoonGravBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
+        Workspace.Gravity = 30
+    else
+        MoonGravBtn.Text = "🪐 Ay Yerçekimi (Moon): Kapalı"
+        MoonGravBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
+        Workspace.Gravity = originalGravity
+    end
+end)
+
+-- 3. Örümcek Adam Kancası
+GrappleBtn.MouseButton1Click:Connect(function()
+    local backpack = LocalPlayer:FindFirstChild("Backpack")
+    if not backpack then return end
+    if backpack:FindFirstChild("Örümcek Kancası") then backpack["Örümcek Kancası"]:Destroy() end
+
+    local tool = Instance.new("Tool")
+    tool.Name = "Örümcek Kancası"
+    tool.RequiresHandle = false
+    tool.CanBeDropped = false
+
+    local mouse = LocalPlayer:GetMouse()
+    tool.Activated:Connect(function()
+        if mouse.Target then
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                local hrp = char.HumanoidRootPart
+                local targetPos = mouse.Hit.Position
+                local bv = Instance.new("BodyVelocity")
+                bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+                bv.Velocity = (targetPos - hrp.Position).Unit * 120
+                bv.Parent = hrp
+                task.wait(0.4)
+                bv:Destroy()
+            end
+        end
+    end)
+    tool.Parent = backpack
+    GrappleBtn.Text = "✅ Kanca Envantere Eklendi!"
+    task.wait(1.5)
+    GrappleBtn.Text = "🕸️ Örümcek Adam Kancası Ver"
+end)
+
+-- 4. Görünmez Araba / Sörf Modu
+SurfBtn.MouseButton1Click:Connect(function()
+    surfEnabled = not surfEnabled
+    local char = LocalPlayer.Character
+    if not char then return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if hum then
+        if surfEnabled then
+            SurfBtn.Text = "🚗 Görünmez Sörf Modu: Açık"
+            SurfBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
+            hum.Sit = true
+        else
+            SurfBtn.Text = "🚗 Görünmez Araba / Sörf Modu: Kapalı"
+            SurfBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
+            hum.Sit = false
+        end
+    end
+end)
+
+-- 5. X-Ray
+XRayBtn.MouseButton1Click:Connect(function()
+    xrayEnabled = not xrayEnabled
+    if xrayEnabled then
+        XRayBtn.Text = "👁️ X-Ray: Açık"
+        XRayBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
+        for _, obj in pairs(Workspace:GetDescendants()) do
+            if obj:IsA("BasePart") and not obj:IsDescendantOf(LocalPlayer.Character) then
+                obj.LocalTransparencyModifier = 0.5
+            end
+        end
+    else
+        XRayBtn.Text = "👁️ X-Ray: Kapalı"
+        XRayBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
+        for _, obj in pairs(Workspace:GetDescendants()) do
+            if obj:IsA("BasePart") then
+                obj.LocalTransparencyModifier = 0
+            end
+        end
+    end
+end)
+
+-- 6. RGB Neon Karakter
+RgbBtn.MouseButton1Click:Connect(function()
+    rgbEnabled = not rgbEnabled
+    if rgbEnabled then
+        RgbBtn.Text = "🌈 RGB Neon Karakter: Açık"
+        RgbBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
+        rgbConnection = RunService.RenderStepped:Connect(function()
+            local char = LocalPlayer.Character
+            if char then
+                local hue = tick() % 5 / 5
+                local color = Color3.fromHSV(hue, 1, 1)
+                for _, part in pairs(char:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.Material = Enum.Material.Neon
+                        part.Color = color
+                    end
+                end
+            end
+        end)
+    else
+        RgbBtn.Text = "🌈 RGB Neon Karakter: Kapalı"
+        RgbBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
+        if rgbConnection then rgbConnection:Disconnect() rgbConnection = nil end
+    end
+end)
+
+-- 7. Fullbright
+FullbrightBtn.MouseButton1Click:Connect(function()
+    fullbrightEnabled = not fullbrightEnabled
+    if fullbrightEnabled then
+        FullbrightBtn.Text = "☀️ Fullbright: Açık"
+        FullbrightBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
+        Lighting.Brightness = 2
+        Lighting.ClockTime = 14
+        Lighting.FogEnd = 999999
+        Lighting.GlobalShadows = false
+    else
+        FullbrightBtn.Text = "☀️ Fullbright: Kapalı"
+        FullbrightBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
+        Lighting.GlobalShadows = true
+        Lighting.FogEnd = 10000
+    end
+end)
+
+-- 8. Hayalet Kamera (Freecam)
+FreecamBtn.MouseButton1Click:Connect(function()
+    freecamEnabled = not freecamEnabled
+    local cam = Workspace.CurrentCamera
+    if freecamEnabled then
+        FreecamBtn.Text = "👻 Hayalet Kamera: Açık"
+        FreecamBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
+        cam.CameraType = Enum.CameraType.Scriptable
+    else
+        FreecamBtn.Text = "👻 Hayalet Kamera: Kapalı"
+        FreecamBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
+        cam.CameraType = Enum.CameraType.Custom
+    end
+end)
+
+-- 9. Otomatik Etkileşim (Auto-Prompt)
+AutoPromptBtn.MouseButton1Click:Connect(function()
+    autoPromptEnabled = not autoPromptEnabled
+    if autoPromptEnabled then
+        AutoPromptBtn.Text = "⚡ Auto-Prompt: Açık"
+        AutoPromptBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
+        promptConnection = RunService.Heartbeat:Connect(function()
+            for _, obj in pairs(Workspace:GetDescendants()) do
+                if obj:IsA("ProximityPrompt") then
+                    fireproximityprompt(obj)
+                end
+            end
+        end)
+    else
+        AutoPromptBtn.Text = "⚡ Auto-Prompt: Kapalı"
+        AutoPromptBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
+        if promptConnection then promptConnection:Disconnect() promptConnection = nil end
+    end
+end)
+
+-- 10. Rastgele Oyuncuya Işınlanma
+TeleportPlayerBtn.MouseButton1Click:Connect(function()
+    local playersList = Players:GetPlayers()
+    local target = nil
+    for _, p in pairs(playersList) do
+        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            target = p
+            break
+        end
+    end
+
+    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+        local char = LocalPlayer.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            char.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
+            TeleportPlayerBtn.Text = "✅ Işınlanıldı: " .. target.Name
+        end
+    else
+        TeleportPlayerBtn.Text = "⚠️ Başka Oyuncu Bulunamadı!"
+    end
+    task.wait(1.5)
+    TeleportPlayerBtn.Text = "🎯 Rastgele Oyuncuya Işınlan"
+end)
+
+-- Diğer Standart Butonlar
+local mouse = LocalPlayer:GetMouse()
+
+TouchTpBtn.MouseButton1Click:Connect(function()
+    touchTpEnabled = not touchTpEnabled
+    TouchTpBtn.Text = touchTpEnabled and "⚡ Dokunduğun Yere TP: Açık" or "⚡ Dokunduğun Yere TP: Kapalı"
+    TouchTpBtn.BackgroundColor3 = touchTpEnabled and Color3.fromRGB(40, 140, 90) or Color3.fromRGB(50, 50, 65)
+end)
+
+UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+    if gameProcessedEvent then return end
+    if touchTpEnabled and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+        if mouse.Target then
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                local targetPos = mouse.Hit.Position + Vector3.new(0, 3.5, 0)
+                char.HumanoidRootPart.CFrame = CFrame.new(targetPos)
+                if isAirWalking and currentYLevel then currentYLevel = targetPos.Y - 3.5 end
+            end
+        end
+    end
+end)
+
+GiveTpToolBtn.MouseButton1Click:Connect(function()
+    local backpack = LocalPlayer:FindFirstChild("Backpack")
+    if not backpack then return end
+    if backpack:FindFirstChild("Işınlanma Aleti") then backpack["Işınlanma Aleti"]:Destroy() end
+    local tool = Instance.new("Tool")
+    tool.Name = "Işınlanma Aleti"
+    tool.RequiresHandle = false
+    tool.CanBeDropped = false
+    tool.Activated:Connect(function()
+        if mouse.Target then
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                local targetPos = mouse.Hit.Position + Vector3.new(0, 3.5, 0)
+                char.HumanoidRootPart.CFrame = CFrame.new(targetPos)
+                if isAirWalking and currentYLevel then currentYLevel = targetPos.Y - 3.5 end
+            end
+        end
+    end)
+    tool.Parent = backpack
+    GiveTpToolBtn.Text = "✅ Envantere Eklendi!"
+    task.wait(1.5)
+    GiveTpToolBtn.Text = "🎒 Envantere 'TP Eşyası' Ver"
+end)
+
+InfMoneyBtn.MouseButton1Click:Connect(function()
+    local count = 0
+    for _, obj in pairs(LocalPlayer:GetDescendants()) do
+        if obj:IsA("IntValue") or obj:IsA("NumberValue") then obj.Value = 999999999 count = count + 1 end
+    end
+    InfMoneyBtn.Text = count > 0 and ("✅ " .. count .. " Değer 999M!") or "⚠️ Değer Bulunamadı!"
+    task.wait(2)
+    InfMoneyBtn.Text = "💸 Sınırsız Para / Coin Bas (999M)"
+end)
+
+InfJumpBtn.MouseButton1Click:Connect(function()
+    infJumpEnabled = not infJumpEnabled
+    InfJumpBtn.Text = infJumpEnabled and "🚀 Havada Sınırsız Zıplama: Açık" or "🚀 Havada Sınırsız Zıplama: Kapalı"
+    InfJumpBtn.BackgroundColor3 = infJumpEnabled and Color3.fromRGB(40, 140, 90) or Color3.fromRGB(50, 50, 65)
+end)
+
+UserInputService.JumpRequest:Connect(function()
+    if infJumpEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+        LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end)
+
+MagnetBtn.MouseButton1Click:Connect(function()
+    magnetEnabled = not magnetEnabled
+    MagnetBtn.Text = magnetEnabled and "🧲 Mıknatıs: Açık" or "🧲 Mıknatıs: Kapalı"
+    MagnetBtn.BackgroundColor3 = magnetEnabled and Color3.fromRGB(40, 140, 90) or Color3.fromRGB(50, 50, 65)
+end)
+
+task.spawn(function()
+    while true do
+        task.wait(0.2)
+        if magnetEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local rootPos = LocalPlayer.Character.HumanoidRootPart.CFrame
+            for _, item in pairs(Workspace:GetDescendants()) do
+                if item:IsA("BasePart") and not item.Anchored then
+                    local name = string.lower(item.Name)
+                    if string.find(name, "coin") or string.find(name, "gem") or string.find(name, "orb") or string.find(name, "drop") then
+                        item.CFrame = rootPos
+                    end
+                end
+            end
+        end
+    end
+end)
+
+LocalPlayer.CharacterAdded:Connect(function()
+    if isAirWalking then StopAirWalk() end
+end)
