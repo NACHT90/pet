@@ -1,4 +1,4 @@
--- Süper Kontrol Paneli v2 (Kaydırılabilir Tam Liste - Tüm Özellikler Aktif)
+-- Süper Kontrol Paneli v4 (Havada Yürüme / Görünmez Zemin Modu)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -7,7 +7,7 @@ local Workspace = game:GetService("Workspace")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- Eski menülerin hepsini temizle (Eski sürümün ekranda kalmasını önler)
+-- Eski menülerin hepsini temizle
 for _, guiName in pairs({"TestArayuzGui", "UcusArayuzGui", "SuperKontrolGui"}) do
     if PlayerGui:FindFirstChild(guiName) then
         PlayerGui[guiName]:Destroy()
@@ -15,22 +15,24 @@ for _, guiName in pairs({"TestArayuzGui", "UcusArayuzGui", "SuperKontrolGui"}) d
 end
 
 -- Değişkenler
-local isFlying = false
-local flySpeed = 50
-local turboEnabled = false -- Menüden veya Shift ile açılabilir
-local turboMultiplier = 3
-local minSpeed = 10
-local maxSpeed = 300
+local isAirWalking = false
+local verticalSpeed = 35 -- Space ve Ctrl ile yükselme/alçalma hızı
+local turboEnabled = false
+local turboMultiplier = 2.5
 
-local autoNoclip = true
+local walkSpeed = 16
+local minWalkSpeed = 16
+local maxWalkSpeed = 300
+
+local autoNoclip = false
 local infJumpEnabled = false
 local magnetEnabled = false
 local touchTpEnabled = false
 
-local bodyVelocity = nil
-local bodyGyro = nil
-local flyConnection = nil
+local airPlatform = nil
+local airWalkConnection = nil
 local noclipConnection = nil
+local currentYLevel = nil
 
 -- Ana Ekran Arayüzü
 local ScreenGui = Instance.new("ScreenGui")
@@ -41,8 +43,8 @@ ScreenGui.ResetOnSpawn = false
 -- Ana Çerçeve
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 310, 0, 380)
-MainFrame.Position = UDim2.new(0.5, -155, 0.5, -190)
+MainFrame.Size = UDim2.new(0, 315, 0, 410)
+MainFrame.Position = UDim2.new(0.5, -157, 0.5, -205)
 MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
@@ -58,19 +60,19 @@ Title.BackgroundColor3 = Color3.fromRGB(32, 32, 42)
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 15
 Title.Font = Enum.Font.GothamBold
-Title.Text = "⚡ Süper Kontrol Paneli v2"
+Title.Text = "⚡ Süper Kontrol Paneli v4 (AirWalk)"
 Title.Parent = MainFrame
 
 Instance.new("UICorner", Title).CornerRadius = UDim.new(0, 12)
 
--- Kaydırılabilir İçerik Alanı (Hiçbir buton dışarı taşmaz!)
+-- Kaydırılabilir İçerik Alanı
 local ScrollFrame = Instance.new("ScrollingFrame")
 ScrollFrame.Size = UDim2.new(1, -12, 1, -52)
 ScrollFrame.Position = UDim2.new(0, 6, 0, 46)
 ScrollFrame.BackgroundTransparency = 1
 ScrollFrame.BorderSizePixel = 0
 ScrollFrame.ScrollBarThickness = 5
-ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 460)
+ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 500)
 ScrollFrame.Parent = MainFrame
 
 local ListLayout = Instance.new("UIListLayout")
@@ -95,51 +97,62 @@ local function CreateMenuButton(order, text, color)
     return btn
 end
 
--- MENÜ ELEMANLARI (Sırasıyla Hepsi Görünür)
-local ToggleFlyBtn = CreateMenuButton(1, "✈️ Uçma: Kapalı (Başlat)", Color3.fromRGB(200, 50, 50))
-local TurboBtn = CreateMenuButton(2, "🔥 Turbo Hız (3x / Sol Shift): Kapalı", Color3.fromRGB(50, 50, 65))
-local NoclipBtn = CreateMenuButton(3, "👻 Oto-Noclip (Duvar Geçme): Açık", Color3.fromRGB(40, 140, 90))
+-- MENÜ ELEMANLARI
+local ToggleAirWalkBtn = CreateMenuButton(1, "👟 Havada Yürüme (AirWalk): Kapalı", Color3.fromRGB(200, 50, 50))
+local TurboBtn = CreateMenuButton(2, "🔥 Turbo Koşu (Sol Shift): Kapalı", Color3.fromRGB(50, 50, 65))
+local NoclipBtn = CreateMenuButton(3, "👻 Noclip (Duvar Geçme): Kapalı", Color3.fromRGB(140, 50, 50))
 
--- Hız Ayar Satırı
-local SpeedRow = Instance.new("Frame")
-SpeedRow.LayoutOrder = 4
-SpeedRow.Size = UDim2.new(0.94, 0, 0, 62)
-SpeedRow.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
-SpeedRow.Parent = ScrollFrame
-Instance.new("UICorner", SpeedRow).CornerRadius = UDim.new(0, 8)
+-- Koşma Hızı (WalkSpeed) Ayar Satırı
+local WalkSpeedRow = Instance.new("Frame")
+WalkSpeedRow.LayoutOrder = 4
+WalkSpeedRow.Size = UDim2.new(0.94, 0, 0, 62)
+WalkSpeedRow.BackgroundColor3 = Color3.fromRGB(30, 38, 35)
+WalkSpeedRow.Parent = ScrollFrame
+Instance.new("UICorner", WalkSpeedRow).CornerRadius = UDim.new(0, 8)
 
-local SpeedLabel = Instance.new("TextLabel")
-SpeedLabel.Size = UDim2.new(1, 0, 0, 24)
-SpeedLabel.BackgroundTransparency = 1
-SpeedLabel.TextColor3 = Color3.fromRGB(200, 210, 255)
-SpeedLabel.TextSize = 12
-SpeedLabel.Font = Enum.Font.GothamSemibold
-SpeedLabel.Text = "Normal Hız: 50 | Turbo Hız: 150"
-SpeedLabel.Parent = SpeedRow
+local WalkSpeedLabel = Instance.new("TextLabel")
+WalkSpeedLabel.Size = UDim2.new(1, 0, 0, 24)
+WalkSpeedLabel.BackgroundTransparency = 1
+WalkSpeedLabel.TextColor3 = Color3.fromRGB(180, 255, 200)
+WalkSpeedLabel.TextSize = 12
+WalkSpeedLabel.Font = Enum.Font.GothamSemibold
+WalkSpeedLabel.Text = "🏃 Yürüme / Uçuş Hızı: " .. walkSpeed
+WalkSpeedLabel.Parent = WalkSpeedRow
 
-local DecreaseBtn = Instance.new("TextButton")
-DecreaseBtn.Size = UDim2.new(0.44, 0, 0, 30)
-DecreaseBtn.Position = UDim2.new(0.04, 0, 0, 27)
-DecreaseBtn.BackgroundColor3 = Color3.fromRGB(55, 55, 70)
-DecreaseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-DecreaseBtn.TextSize = 15
-DecreaseBtn.Font = Enum.Font.GothamBold
-DecreaseBtn.Text = "- 10"
-DecreaseBtn.Parent = SpeedRow
-Instance.new("UICorner", DecreaseBtn).CornerRadius = UDim.new(0, 6)
+local DecWalkBtn = Instance.new("TextButton")
+DecWalkBtn.Size = UDim2.new(0.28, 0, 0, 30)
+DecWalkBtn.Position = UDim2.new(0.04, 0, 0, 27)
+DecWalkBtn.BackgroundColor3 = Color3.fromRGB(45, 65, 55)
+DecWalkBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+DecWalkBtn.TextSize = 14
+DecWalkBtn.Font = Enum.Font.GothamBold
+DecWalkBtn.Text = "- 5"
+DecWalkBtn.Parent = WalkSpeedRow
+Instance.new("UICorner", DecWalkBtn).CornerRadius = UDim.new(0, 6)
 
-local IncreaseBtn = Instance.new("TextButton")
-IncreaseBtn.Size = UDim2.new(0.44, 0, 0, 30)
-IncreaseBtn.Position = UDim2.new(0.52, 0, 0, 27)
-IncreaseBtn.BackgroundColor3 = Color3.fromRGB(55, 55, 70)
-IncreaseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-IncreaseBtn.TextSize = 15
-IncreaseBtn.Font = Enum.Font.GothamBold
-IncreaseBtn.Text = "+ 10"
-IncreaseBtn.Parent = SpeedRow
-Instance.new("UICorner", IncreaseBtn).CornerRadius = UDim.new(0, 6)
+local ResetWalkBtn = Instance.new("TextButton")
+ResetWalkBtn.Size = UDim2.new(0.30, 0, 0, 30)
+ResetWalkBtn.Position = UDim2.new(0.35, 0, 0, 27)
+ResetWalkBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 85)
+ResetWalkBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ResetWalkBtn.TextSize = 12
+ResetWalkBtn.Font = Enum.Font.GothamSemibold
+ResetWalkBtn.Text = "Sıfırla (16)"
+ResetWalkBtn.Parent = WalkSpeedRow
+Instance.new("UICorner", ResetWalkBtn).CornerRadius = UDim.new(0, 6)
 
--- Yeni Eklenen Özel Butonlar
+local IncWalkBtn = Instance.new("TextButton")
+IncWalkBtn.Size = UDim2.new(0.28, 0, 0, 30)
+IncWalkBtn.Position = UDim2.new(0.68, 0, 0, 27)
+IncWalkBtn.BackgroundColor3 = Color3.fromRGB(45, 65, 55)
+IncWalkBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+IncWalkBtn.TextSize = 14
+IncWalkBtn.Font = Enum.Font.GothamBold
+IncWalkBtn.Text = "+ 5"
+IncWalkBtn.Parent = WalkSpeedRow
+Instance.new("UICorner", IncWalkBtn).CornerRadius = UDim.new(0, 6)
+
+-- Diğer Özel Butonlar
 local TouchTpBtn = CreateMenuButton(5, "⚡ Dokunduğun Yere TP: Kapalı", Color3.fromRGB(50, 50, 65))
 local GiveTpToolBtn = CreateMenuButton(6, "🎒 Envantere 'TP Eşyası' Ver", Color3.fromRGB(85, 60, 150))
 local InfMoneyBtn = CreateMenuButton(7, "💸 Sınırsız Para / Coin Bas (999M)", Color3.fromRGB(200, 140, 20))
@@ -147,8 +160,44 @@ local InfJumpBtn = CreateMenuButton(8, "🚀 Havada Sınırsız Zıplama: Kapal�
 local MagnetBtn = CreateMenuButton(9, "🧲 Eşya / Coin Mıknatısı: Kapalı", Color3.fromRGB(50, 50, 65))
 
 ---------------------------------------------------------------------
--- FONKSİYONLAR VE MEKANİKLER
+-- HAVADA YÜRÜME (AIR WALK) VE MEKANİKLER
 ---------------------------------------------------------------------
+
+local function ApplyWalkSpeed()
+    WalkSpeedLabel.Text = "🏃 Yürüme / Uçuş Hızı: " .. walkSpeed
+end
+
+DecWalkBtn.MouseButton1Click:Connect(function()
+    walkSpeed = math.clamp(walkSpeed - 5, minWalkSpeed, maxWalkSpeed)
+    ApplyWalkSpeed()
+end)
+
+ResetWalkBtn.MouseButton1Click:Connect(function()
+    walkSpeed = 16
+    ApplyWalkSpeed()
+end)
+
+IncWalkBtn.MouseButton1Click:Connect(function()
+    walkSpeed = math.clamp(walkSpeed + 5, minWalkSpeed, maxWalkSpeed)
+    ApplyWalkSpeed()
+end)
+
+-- Hız ve Turbo Kontrol Döngüsü
+RunService.Heartbeat:Connect(function()
+    local char = LocalPlayer.Character
+    if char then
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if hum then
+            local targetSpeed = walkSpeed
+            if turboEnabled or UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+                targetSpeed = walkSpeed * turboMultiplier
+            end
+            if hum.WalkSpeed ~= targetSpeed then
+                hum.WalkSpeed = targetSpeed
+            end
+        end
+    end
+end)
 
 local function SetCharacterCollision(state)
     local char = LocalPlayer.Character
@@ -161,101 +210,84 @@ local function SetCharacterCollision(state)
     end
 end
 
-local function StopFlying()
-    isFlying = false
-    ToggleFlyBtn.Text = "✈️ Uçma: Kapalı (Başlat)"
-    ToggleFlyBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+-- Havada Yürümeyi Durdurma
+local function StopAirWalk()
+    isAirWalking = false
+    ToggleAirWalkBtn.Text = "👟 Havada Yürüme (AirWalk): Kapalı"
+    ToggleAirWalkBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
 
-    if bodyVelocity then bodyVelocity:Destroy() bodyVelocity = nil end
-    if bodyGyro then bodyGyro:Destroy() bodyGyro = nil end
-    if flyConnection then flyConnection:Disconnect() flyConnection = nil end
-    if noclipConnection then noclipConnection:Disconnect() noclipConnection = nil end
-
-    local character = LocalPlayer.Character
-    if character then
-        if character:FindFirstChild("Humanoid") then
-            character.Humanoid.PlatformStand = false
-        end
-        SetCharacterCollision(true)
+    if airWalkConnection then
+        airWalkConnection:Disconnect()
+        airWalkConnection = nil
+    end
+    if airPlatform then
+        airPlatform:Destroy()
+        airPlatform = nil
     end
 end
 
-local function StartFlying()
+-- Havada Yürümeyi Başlatma (Görünmez Platform Sistemi)
+local function StartAirWalk()
     local character = LocalPlayer.Character
     if not character then return end
     local rootPart = character:FindFirstChild("HumanoidRootPart")
-    local humanoid = character:FindFirstChild("Humanoid")
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
     if not rootPart or not humanoid then return end
 
-    isFlying = true
-    ToggleFlyBtn.Text = "✈️ Uçma: Açık (Durdur)"
-    ToggleFlyBtn.BackgroundColor3 = Color3.fromRGB(40, 160, 70)
-    humanoid.PlatformStand = true
+    isAirWalking = true
+    ToggleAirWalkBtn.Text = "👟 Havada Yürüme (AirWalk): Açık"
+    ToggleAirWalkBtn.BackgroundColor3 = Color3.fromRGB(40, 160, 70)
 
-    bodyVelocity = Instance.new("BodyVelocity")
-    bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-    bodyVelocity.Velocity = Vector3.new(0, 0, 0)
-    bodyVelocity.Parent = rootPart
+    -- Karakterin ayaklarının altına görünmez bir zemin oluştur
+    airPlatform = Instance.new("Part")
+    airPlatform.Name = "AirWalkPlatform"
+    airPlatform.Size = Vector3.new(12, 1, 12)
+    airPlatform.Anchored = true
+    airPlatform.CanCollide = true
+    airPlatform.Transparency = 0.7 -- Hafif görünür (Tamamen görünmez yapmak için 1 yapabilirsin)
+    airPlatform.Material = Enum.Material.ForceField
+    airPlatform.Color = Color3.fromRGB(0, 200, 255)
+    airPlatform.Parent = Workspace
 
-    bodyGyro = Instance.new("BodyGyro")
-    bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
-    bodyGyro.P = 9e4
-    bodyGyro.CFrame = rootPart.CFrame
-    bodyGyro.Parent = rootPart
+    -- Karakterin bacak yüksekliğini hesapla
+    local hipOffset = humanoid.HipHeight + (rootPart.Size.Y / 2) + (airPlatform.Size.Y / 2)
+    currentYLevel = rootPart.Position.Y - hipOffset
 
-    noclipConnection = RunService.Stepped:Connect(function()
-        if isFlying and autoNoclip and LocalPlayer.Character then
-            for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
-                if part:IsA("BasePart") and part.CanCollide then
-                    part.CanCollide = false
-                end
-            end
-        end
-    end)
-
-    flyConnection = RunService.RenderStepped:Connect(function()
-        if not isFlying or not LocalPlayer.Character or not rootPart.Parent then
-            StopFlying()
+    airWalkConnection = RunService.RenderStepped:Connect(function(dt)
+        if not isAirWalking or not LocalPlayer.Character or not rootPart.Parent then
+            StopAirWalk()
             return
         end
 
-        local cam = Workspace.CurrentCamera
-        local moveDir = Vector3.new(0, 0, 0)
-
-        if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + cam.CFrame.LookVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - cam.CFrame.LookVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - cam.CFrame.RightVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + cam.CFrame.RightVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0, 1, 0) end
-        if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir = moveDir - Vector3.new(0, 1, 0) end
-
-        if moveDir.Magnitude > 0 then
-            moveDir = moveDir.Unit
+        -- Space basılıysa zemini yukarı kaldır, Sol Ctrl basılıysa aşağı indir
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+            currentYLevel = currentYLevel + (verticalSpeed * dt)
+        elseif UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+            currentYLevel = currentYLevel - (verticalSpeed * dt)
         end
 
-        -- Menüden Turbo açıksa VEYA Sol Shift basılıysa 3x hız uygula
-        local currentSpeed = flySpeed
-        if turboEnabled or UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
-            currentSpeed = flySpeed * turboMultiplier
-        end
+        -- Platformu sürekli karakterin X ve Z konumunun altında tut
+        airPlatform.CFrame = CFrame.new(rootPart.Position.X, currentYLevel, rootPart.Position.Z)
 
-        bodyVelocity.Velocity = moveDir * currentSpeed
-        bodyGyro.CFrame = cam.CFrame
+        -- Aşağı inerken veya yukarı çıkarken karakterin platformdan kopmaması için dikey hızı dengeler
+        if rootPart.Position.Y < currentYLevel + hipOffset - 0.5 then
+            rootPart.CFrame = CFrame.new(rootPart.Position.X, currentYLevel + hipOffset, rootPart.Position.Z) * rootPart.CFrame.Rotation
+            rootPart.AssemblyLinearVelocity = Vector3.new(rootPart.AssemblyLinearVelocity.X, 0, rootPart.AssemblyLinearVelocity.Z)
+        end
     end)
 end
 
--- Buton Bağlantıları
-ToggleFlyBtn.MouseButton1Click:Connect(function()
-    if isFlying then StopFlying() else StartFlying() end
+ToggleAirWalkBtn.MouseButton1Click:Connect(function()
+    if isAirWalking then StopAirWalk() else StartAirWalk() end
 end)
 
 TurboBtn.MouseButton1Click:Connect(function()
     turboEnabled = not turboEnabled
     if turboEnabled then
-        TurboBtn.Text = "🔥 Turbo Hız (3x / Sol Shift): Açık"
+        TurboBtn.Text = "🔥 Turbo Koşu (Sol Shift): Açık"
         TurboBtn.BackgroundColor3 = Color3.fromRGB(220, 100, 30)
     else
-        TurboBtn.Text = "🔥 Turbo Hız (3x / Sol Shift): Kapalı"
+        TurboBtn.Text = "🔥 Turbo Koşu (Sol Shift): Kapalı"
         TurboBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
     end
 end)
@@ -263,27 +295,23 @@ end)
 NoclipBtn.MouseButton1Click:Connect(function()
     autoNoclip = not autoNoclip
     if autoNoclip then
-        NoclipBtn.Text = "👻 Oto-Noclip (Duvar Geçme): Açık"
+        NoclipBtn.Text = "👻 Noclip (Duvar Geçme): Açık"
         NoclipBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
+        noclipConnection = RunService.Stepped:Connect(function()
+            if autoNoclip and LocalPlayer.Character then
+                for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+                    if part:IsA("BasePart") and part.CanCollide then
+                        part.CanCollide = false
+                    end
+                end
+            end
+        end)
     else
-        NoclipBtn.Text = "👻 Oto-Noclip (Duvar Geçme): Kapalı"
+        NoclipBtn.Text = "👻 Noclip (Duvar Geçme): Kapalı"
         NoclipBtn.BackgroundColor3 = Color3.fromRGB(140, 50, 50)
+        if noclipConnection then noclipConnection:Disconnect() noclipConnection = nil end
         SetCharacterCollision(true)
     end
-end)
-
-local function UpdateSpeedText()
-    SpeedLabel.Text = "Normal Hız: " .. flySpeed .. " | Turbo Hız: " .. (flySpeed * turboMultiplier)
-end
-
-DecreaseBtn.MouseButton1Click:Connect(function()
-    flySpeed = math.clamp(flySpeed - 10, minSpeed, maxSpeed)
-    UpdateSpeedText()
-end)
-
-IncreaseBtn.MouseButton1Click:Connect(function()
-    flySpeed = math.clamp(flySpeed + 10, minSpeed, maxSpeed)
-    UpdateSpeedText()
 end)
 
 -- Dokunduğun / Tıkladığın Yere TP
@@ -307,7 +335,11 @@ UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
             if mouse.Target then
                 local char = LocalPlayer.Character
                 if char and char:FindFirstChild("HumanoidRootPart") then
-                    char.HumanoidRootPart.CFrame = CFrame.new(mouse.Hit.Position + Vector3.new(0, 3.5, 0))
+                    local targetPos = mouse.Hit.Position + Vector3.new(0, 3.5, 0)
+                    char.HumanoidRootPart.CFrame = CFrame.new(targetPos)
+                    if isAirWalking and currentYLevel then
+                        currentYLevel = targetPos.Y - 3.5
+                    end
                 end
             end
         end
@@ -332,7 +364,11 @@ GiveTpToolBtn.MouseButton1Click:Connect(function()
         if mouse.Target then
             local char = LocalPlayer.Character
             if char and char:FindFirstChild("HumanoidRootPart") then
-                char.HumanoidRootPart.CFrame = CFrame.new(mouse.Hit.Position + Vector3.new(0, 3.5, 0))
+                local targetPos = mouse.Hit.Position + Vector3.new(0, 3.5, 0)
+                char.HumanoidRootPart.CFrame = CFrame.new(targetPos)
+                if isAirWalking and currentYLevel then
+                    currentYLevel = targetPos.Y - 3.5
+                end
             end
         end
     end)
@@ -409,5 +445,5 @@ task.spawn(function()
 end)
 
 LocalPlayer.CharacterAdded:Connect(function()
-    if isFlying then StopFlying() end
+    if isAirWalking then StopAirWalk() end
 end)
