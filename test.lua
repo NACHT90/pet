@@ -1,4 +1,4 @@
--- Süper Kontrol Paneli v10 (Pet Spawn + Ordu + Auto-Farm + Tüm Çılgın Özellikler)
+-- Süper Kontrol Paneli v12 (Hologram / Sunucuda Yerde Görün ama Değme Modu)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -17,6 +17,7 @@ end
 
 -- Değişkenler
 local isAirWalking = false
+local floatGroundEnabled = false -- Sunucu yerde sansın ama sen zemine değme
 local turboEnabled = false
 local turboMultiplier = 2.5
 local customSpeed = 16
@@ -46,6 +47,7 @@ local petArmyEnabled = false
 
 local airPlatform = nil
 local airWalkConnection = nil
+local floatGroundConnection = nil
 local noclipConnection = nil
 local flingConnection = nil
 local rgbConnection = nil
@@ -88,7 +90,7 @@ Title.BackgroundColor3 = Color3.fromRGB(28, 28, 38)
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 15
 Title.Font = Enum.Font.GothamBold
-Title.Text = "⚡ Süper Kontrol Paneli v10 (Pet & God)"
+Title.Text = "⚡ Süper Kontrol Paneli v12 (Float Ground)"
 Title.Parent = MainFrame
 
 Instance.new("UICorner", Title).CornerRadius = UDim.new(0, 14)
@@ -129,14 +131,15 @@ local function CreateMenuButton(order, text, color)
     return btn
 end
 
--- TÜM MENÜ ELEMANLARI (Pet Odaklı + Önceki Çılgınlıklar)
-local ToggleAirWalkBtn = CreateMenuButton(1, "👟 Havada Yürüme (AirWalk): Kapalı", Color3.fromRGB(200, 50, 50))
-local TurboBtn = CreateMenuButton(2, "🔥 Turbo Hız (Sol Shift): Kapalı", Color3.fromRGB(50, 50, 65))
-local NoclipBtn = CreateMenuButton(3, "👻 Noclip (Duvar Geçme): Kapalı", Color3.fromRGB(140, 50, 50))
+-- TÜM MENÜ ELEMANLARI
+local FloatGroundBtn = CreateMenuButton(1, "🪐 Float Ground (Sunucu Yerde Sansın, Değme): Kapalı", Color3.fromRGB(100, 140, 200))
+local ToggleAirWalkBtn = CreateMenuButton(2, "👟 Havada Yürüme (AirWalk): Kapalı", Color3.fromRGB(200, 50, 50))
+local TurboBtn = CreateMenuButton(3, "🔥 Turbo Hız (Sol Shift): Kapalı", Color3.fromRGB(50, 50, 65))
+local NoclipBtn = CreateMenuButton(4, "👻 Noclip (Duvar Geçme): Kapalı", Color3.fromRGB(140, 50, 50))
 
 -- Hız Ayar Satırı
 local SpeedRow = Instance.new("Frame")
-SpeedRow.LayoutOrder = 4
+SpeedRow.LayoutOrder = 5
 SpeedRow.Size = UDim2.new(0.94, 0, 0, 64)
 SpeedRow.BackgroundColor3 = Color3.fromRGB(30, 38, 35)
 SpeedRow.Parent = ScrollFrame
@@ -184,34 +187,34 @@ IncSpeedBtn.Text = "+ 10"
 IncSpeedBtn.Parent = SpeedRow
 Instance.new("UICorner", IncSpeedBtn).CornerRadius = UDim.new(0, 6)
 
--- Yeni Pet & Farm Butonları + Tüm Özellikler
-local SpawnEggBtn = CreateMenuButton(5, "🥚 Olduğun Yere 'Pet Egg/Chest' Spawnla", Color3.fromRGB(180, 100, 20))
-local PetArmyBtn = CreateMenuButton(6, "🐾 Pet Takip Ordusu (Pet Swarm): Kapalı", Color3.fromRGB(50, 50, 65))
-local AutoFarmBtn = CreateMenuButton(7, "⚡ Otomatik Farm / Coin Kırıcı: Kapalı", Color3.fromRGB(40, 140, 90))
-local MaxPetsBtn = CreateMenuButton(8, "✨ Petleri Rainbow / Max Yap (Visual)", Color3.fromRGB(200, 140, 20))
-local TouchTpBtn = CreateMenuButton(9, "⚡ Dokunduğun Yere TP: Kapalı", Color3.fromRGB(50, 50, 65))
-local GiveTpToolBtn = CreateMenuButton(10, "🎒 Envantere 'TP Eşyası' Ver", Color3.fromRGB(85, 60, 150))
-local FlingBtn = CreateMenuButton(11, "🌪️ Kasırga / Fling Modu: Kapalı", Color3.fromRGB(50, 50, 65))
-local MoonGravBtn = CreateMenuButton(12, "🪐 Ay Yerçekimi (Moon): Kapalı", Color3.fromRGB(50, 50, 65))
-local PulseBtn = CreateMenuButton(13, "💥 Yerçekimi Patlaması (Pulse At)", Color3.fromRGB(180, 50, 50))
-local GrappleBtn = CreateMenuButton(14, "🕸️ Örümcek Adam Kancası Ver", Color3.fromRGB(85, 60, 150))
-local SurfBtn = CreateMenuButton(15, "🚗 Görünmez Sörf Modu: Kapalı", Color3.fromRGB(50, 50, 65))
-local BridgeBtn = CreateMenuButton(16, "🧱 Insta-Bridge (Altına Köprü Ör): Kapalı", Color3.fromRGB(50, 50, 65))
-local GiantBtn = CreateMenuButton(17, "🧍 Dev Adam Modu (Boyut Büyüt)", Color3.fromRGB(100, 50, 150))
-local MiniBtn = CreateMenuButton(18, "👶 Cüce Modu (Boyut Küçült)", Color3.fromRGB(100, 50, 150))
-local XRayBtn = CreateMenuButton(19, "👁️ X-Ray (Duvarları Şeffaf Yap): Kapalı", Color3.fromRGB(50, 50, 65))
-local RgbBtn = CreateMenuButton(20, "🌈 RGB Neon Karakter: Kapalı", Color3.fromRGB(50, 50, 65))
-local RgbSkyBtn = CreateMenuButton(21, "🎨 Gökkuşağı Gökyüzü (RGB Sky): Kapalı", Color3.fromRGB(50, 50, 65))
-local TrailBtn = CreateMenuButton(22, "👥 Hayalet Kopya İzi (Ghost Trail): Kapalı", Color3.fromRGB(50, 50, 65))
-local FullbrightBtn = CreateMenuButton(23, "☀️ Fullbright (Gece Görüşü): Kapalı", Color3.fromRGB(50, 50, 65))
-local TimeFreezeBtn = CreateMenuButton(24, "⏰ Dünya Zamanını Dondur: Kapalı", Color3.fromRGB(50, 50, 65))
-local FreecamBtn = CreateMenuButton(25, "👻 Hayalet Kamera (Freecam): Kapalı", Color3.fromRGB(50, 50, 65))
-local AutoPromptBtn = CreateMenuButton(26, "⚡ Otomatik Etkileşim (Auto-Prompt): Kapalı", Color3.fromRGB(50, 50, 65))
-local AutoChatBtn = CreateMenuButton(27, "💬 Otomatik Sohbet Spammer: Kapalı", Color3.fromRGB(50, 50, 65))
-local TeleportPlayerBtn = CreateMenuButton(28, "🎯 Rastgele Oyuncuya Işınlan", Color3.fromRGB(150, 80, 50))
-local InfMoneyBtn = CreateMenuButton(29, "💸 Sınırsız Para / Coin Bas (999M)", Color3.fromRGB(200, 140, 20))
-local InfJumpBtn = CreateMenuButton(30, "🚀 Havada Sınırsız Zıplama: Kapalı", Color3.fromRGB(50, 50, 65))
-local MagnetBtn = CreateMenuButton(31, "🧲 Eşya / Coin Mıknatısı: Kapalı", Color3.fromRGB(50, 50, 65))
+-- Diğer Butonlar
+local SpawnEggBtn = CreateMenuButton(6, "🥚 Olduğun Yere 'Pet Egg/Chest' Spawnla", Color3.fromRGB(180, 100, 20))
+local PetArmyBtn = CreateMenuButton(7, "🐾 Pet Takip Ordusu (Pet Swarm): Kapalı", Color3.fromRGB(50, 50, 65))
+local AutoFarmBtn = CreateMenuButton(8, "⚡ Otomatik Farm / Coin Kırıcı: Kapalı", Color3.fromRGB(40, 140, 90))
+local MaxPetsBtn = CreateMenuButton(9, "✨ Petleri Rainbow / Max Yap (Visual)", Color3.fromRGB(200, 140, 20))
+local TouchTpBtn = CreateMenuButton(10, "⚡ Dokunduğun Yere TP: Kapalı", Color3.fromRGB(50, 50, 65))
+local GiveTpToolBtn = CreateMenuButton(11, "🎒 Envantere 'TP Eşyası' Ver", Color3.fromRGB(85, 60, 150))
+local FlingBtn = CreateMenuButton(12, "🌪️ Kasırga / Fling Modu: Kapalı", Color3.fromRGB(50, 50, 65))
+local MoonGravBtn = CreateMenuButton(13, "🪐 Ay Yerçekimi (Moon): Kapalı", Color3.fromRGB(50, 50, 65))
+local PulseBtn = CreateMenuButton(14, "💥 Yerçekimi Patlaması (Pulse At)", Color3.fromRGB(180, 50, 50))
+local GrappleBtn = CreateMenuButton(15, "🕸️ Örümcek Adam Kancası Ver", Color3.fromRGB(85, 60, 150))
+local SurfBtn = CreateMenuButton(16, "🚗 Görünmez Sörf Modu: Kapalı", Color3.fromRGB(50, 50, 65))
+local BridgeBtn = CreateMenuButton(17, "🧱 Insta-Bridge (Altına Köprü Ör): Kapalı", Color3.fromRGB(50, 50, 65))
+local GiantBtn = CreateMenuButton(18, "🧍 Dev Adam Modu (Boyut Büyüt)", Color3.fromRGB(100, 50, 150))
+local MiniBtn = CreateMenuButton(19, "👶 Cüce Modu (Boyut Küçült)", Color3.fromRGB(100, 50, 150))
+local XRayBtn = CreateMenuButton(20, "👁️ X-Ray (Duvarları Şeffaf Yap): Kapalı", Color3.fromRGB(50, 50, 65))
+local RgbBtn = CreateMenuButton(21, "🌈 RGB Neon Karakter: Kapalı", Color3.fromRGB(50, 50, 65))
+local RgbSkyBtn = CreateMenuButton(22, "🎨 Gökkuşağı Gökyüzü (RGB Sky): Kapalı", Color3.fromRGB(50, 50, 65))
+local TrailBtn = CreateMenuButton(23, "👥 Hayalet Kopya İzi (Ghost Trail): Kapalı", Color3.fromRGB(50, 50, 65))
+local FullbrightBtn = CreateMenuButton(24, "☀️ Fullbright (Gece Görüşü): Kapalı", Color3.fromRGB(50, 50, 65))
+local TimeFreezeBtn = CreateMenuButton(25, "⏰ Dünya Zamanını Dondur: Kapalı", Color3.fromRGB(50, 50, 65))
+local FreecamBtn = CreateMenuButton(26, "👻 Hayalet Kamera (Freecam): Kapalı", Color3.fromRGB(50, 50, 65))
+local AutoPromptBtn = CreateMenuButton(27, "⚡ Otomatik Etkileşim (Auto-Prompt): Kapalı", Color3.fromRGB(50, 50, 65))
+local AutoChatBtn = CreateMenuButton(28, "💬 Otomatik Sohbet Spammer: Kapalı", Color3.fromRGB(50, 50, 65))
+local TeleportPlayerBtn = CreateMenuButton(29, "🎯 Rastgele Oyuncuya Işınlan", Color3.fromRGB(150, 80, 50))
+local InfMoneyBtn = CreateMenuButton(30, "💸 Sınırsız Para / Coin Bas (999M)", Color3.fromRGB(200, 140, 20))
+local InfJumpBtn = CreateMenuButton(31, "🚀 Havada Sınırsız Zıplama: Kapalı", Color3.fromRGB(50, 50, 65))
+local MagnetBtn = CreateMenuButton(32, "🧲 Eşya / Coin Mıknatısı: Kapalı", Color3.fromRGB(50, 50, 65))
 
 ---------------------------------------------------------------------
 -- HIZ VE TEMEL FONKSİYONLAR
@@ -262,95 +265,33 @@ RunService.Heartbeat:Connect(function(dt)
 end)
 
 ---------------------------------------------------------------------
--- YENİ PET VE FARM ÖZELLİKLERİ
+-- YENİ: FLOAT GROUND (SUNUCU YERDE SANSIN, SEN DEĞME) MODU
 ---------------------------------------------------------------------
-
--- 1. Egg / Chest Spawnla
-SpawnEggBtn.MouseButton1Click:Connect(function()
-    local char = LocalPlayer.Character
-    if char and char:FindFirstChild("HumanoidRootPart") then
-        local hrp = char.HumanoidRootPart
-        local egg = Instance.new("Part")
-        egg.Name = "SpawnedPetEgg"
-        egg.Size = Vector3.new(4, 5, 4)
-        egg.Position = hrp.Position + (hrp.CFrame.LookVector * 5) + Vector3.new(0, 2, 0)
-        egg.Shape = Enum.PartType.Ball
-        egg.Material = Enum.Material.Neon
-        egg.BrickColor = BrickColor.random()
-        egg.Anchored = false
-        egg.Parent = Workspace
-        SpawnEggBtn.Text = "✅ Pet Sandığı Oluşturuldu!"
-        task.wait(1.5)
-        SpawnEggBtn.Text = "🥚 Olduğun Yere 'Pet Egg/Chest' Spawnla"
-    end
-end)
-
--- 2. Pet Takip Ordusu (Pet Swarm)
-PetArmyBtn.MouseButton1Click:Connect(function()
-    petArmyEnabled = not petArmyEnabled
-    if petArmyEnabled then
-        PetArmyBtn.Text = "🐾 Pet Takip Ordusu: Açık"
-        PetArmyBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
-        petArmyConnection = RunService.RenderStepped:Connect(function()
+FloatGroundBtn.MouseButton1Click:Connect(function()
+    floatGroundEnabled = not floatGroundEnabled
+    if floatGroundEnabled then
+        FloatGroundBtn.Text = "🪐 Float Ground: Açık"
+        FloatGroundBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
+        
+        floatGroundConnection = RunService.RenderStepped:Connect(function()
             local char = LocalPlayer.Character
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                local hrp = char.HumanoidRootPart
-                for i, p in pairs(Workspace:GetChildren()) do
-                    if p:IsA("Model") and p ~= char and p:FindFirstChild("HumanoidRootPart") and i <= 5 then
-                        p.HumanoidRootPart.CFrame = hrp.CFrame * CFrame.new(i * 3, 0, i * 3)
-                    end
+            if char and char:FindFirstChildOfClass("Humanoid") then
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                -- Humanoid durumunu sürekli yerde (Running) zorlar, 
+                -- böylece sunucu ve oyun motoru karakterin yere bastığını zanneder.
+                if hum:GetState() == Enum.HumanoidStateType.Freefall or hum:GetState() == Enum.HumanoidStateType.Jumping then
+                    hum:ChangeState(Enum.HumanoidStateType.Running)
                 end
             end
         end)
     else
-        PetArmyBtn.Text = "🐾 Pet Takip Ordusu (Pet Swarm): Kapalı"
-        PetArmyBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
-        if petArmyConnection then petArmyConnection:Disconnect() petArmyConnection = nil end
-    end
-end)
-
--- 3. Otomatik Farm / Coin Kırıcı
-AutoFarmBtn.MouseButton1Click:Connect(function()
-    autoFarmEnabled = not autoFarmEnabled
-    if autoFarmEnabled then
-        AutoFarmBtn.Text = "⚡ Otomatik Farm: Açık"
-        AutoFarmBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
-        autoFarmConnection = RunService.Heartbeat:Connect(function()
-            local char = LocalPlayer.Character
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                local hrp = char.HumanoidRootPart
-                for _, obj in pairs(Workspace:GetDescendants()) do
-                    if obj:IsA("BasePart") and not obj.Anchored then
-                        local name = string.lower(obj.Name)
-                        if string.find(name, "chest") or string.find(name, "box") or string.find(name, "break") then
-                            hrp.CFrame = obj.CFrame + Vector3.new(0, 3, 0)
-                            task.wait(0.1)
-                        end
-                    end
-                end
-            end
-        end)
-    else
-        AutoFarmBtn.Text = "⚡ Otomatik Farm / Coin Kırıcı: Kapalı"
-        AutoFarmBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
-        if autoFarmConnection then autoFarmConnection:Disconnect() autoFarmConnection = nil end
-        AutoFarmBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
-    end
-end)
-
--- 4. Petleri Rainbow / Max Yap
-MaxPetsBtn.MouseButton1Click:Connect(function()
-    for _, obj in pairs(LocalPlayer:GetDescendants()) do
-        if obj:IsA("StringValue") or obj:IsA("IntValue") then
-            local n = string.lower(obj.Name)
-            if string.find(n, "pet") or string.find(n, "level") or string.find(n, "power") then
-                obj.Value = 999999
-            end
+        FloatGroundBtn.Text = "🪐 Float Ground (Sunucu Yerde Sansın, Değme): Kapalı"
+        FloatGroundBtn.BackgroundColor3 = Color3.fromRGB(100, 140, 200)
+        if floatGroundConnection then
+            floatGroundConnection:Disconnect()
+            floatGroundConnection = nil
         end
     end
-    MaxPetsBtn.Text = "✨ Petler Rainbow/Max Yapıldı!"
-    task.wait(1.5)
-    MaxPetsBtn.Text = "✨ Petleri Rainbow / Max Yap (Visual)"
 end)
 
 ---------------------------------------------------------------------
@@ -460,6 +401,89 @@ end)
 -- DİĞER TÜM ÇILGIN ÖZELLİKLER
 ---------------------------------------------------------------------
 
+SpawnEggBtn.MouseButton1Click:Connect(function()
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        local hrp = char.HumanoidRootPart
+        local egg = Instance.new("Part")
+        egg.Name = "SpawnedPetEgg"
+        egg.Size = Vector3.new(4, 5, 4)
+        egg.Position = hrp.Position + (hrp.CFrame.LookVector * 5) + Vector3.new(0, 2, 0)
+        egg.Shape = Enum.PartType.Ball
+        egg.Material = Enum.Material.Neon
+        egg.BrickColor = BrickColor.random()
+        egg.Anchored = false
+        egg.Parent = Workspace
+        SpawnEggBtn.Text = "✅ Pet Sandığı Oluşturuldu!"
+        task.wait(1.5)
+        SpawnEggBtn.Text = "🥚 Olduğun Yere 'Pet Egg/Chest' Spawnla"
+    end
+end)
+
+PetArmyBtn.MouseButton1Click:Connect(function()
+    petArmyEnabled = not petArmyEnabled
+    if petArmyEnabled then
+        PetArmyBtn.Text = "🐾 Pet Takip Ordusu: Açık"
+        PetArmyBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
+        petArmyConnection = RunService.RenderStepped:Connect(function()
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                local hrp = char.HumanoidRootPart
+                for i, p in pairs(Workspace:GetChildren()) do
+                    if p:IsA("Model") and p ~= char and p:FindFirstChild("HumanoidRootPart") and i <= 5 then
+                        p.HumanoidRootPart.CFrame = hrp.CFrame * CFrame.new(i * 3, 0, i * 3)
+                    end
+                end
+            end
+        end)
+    else
+        PetArmyBtn.Text = "🐾 Pet Takip Ordusu (Pet Swarm): Kapalı"
+        PetArmyBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
+        if petArmyConnection then petArmyConnection:Disconnect() petArmyConnection = nil end
+    end
+end)
+
+AutoFarmBtn.MouseButton1Click:Connect(function()
+    autoFarmEnabled = not autoFarmEnabled
+    if autoFarmEnabled then
+        AutoFarmBtn.Text = "⚡ Otomatik Farm: Açık"
+        AutoFarmBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
+        autoFarmConnection = RunService.Heartbeat:Connect(function()
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                local hrp = char.HumanoidRootPart
+                for _, obj in pairs(Workspace:GetDescendants()) do
+                    if obj:IsA("BasePart") and not obj.Anchored then
+                        local name = string.lower(obj.Name)
+                        if string.find(name, "chest") or string.find(name, "box") or string.find(name, "break") then
+                            hrp.CFrame = obj.CFrame + Vector3.new(0, 3, 0)
+                            task.wait(0.1)
+                        end
+                    end
+                end
+            end
+        end)
+    else
+        AutoFarmBtn.Text = "⚡ Otomatik Farm / Coin Kırıcı: Kapalı"
+        AutoFarmBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
+        if autoFarmConnection then autoFarmConnection:Disconnect() autoFarmConnection = nil end
+    end
+end)
+
+MaxPetsBtn.MouseButton1Click:Connect(function()
+    for _, obj in pairs(LocalPlayer:GetDescendants()) do
+        if obj:IsA("StringValue") or obj:IsA("IntValue") then
+            local n = string.lower(obj.Name)
+            if string.find(n, "pet") or string.find(n, "level") or string.find(n, "power") then
+                obj.Value = 999999
+            end
+        end
+    end
+    MaxPetsBtn.Text = "✨ Petler Rainbow/Max Yapıldı!"
+    task.wait(1.5)
+    MaxPetsBtn.Text = "✨ Petleri Rainbow / Max Yap (Visual)"
+end)
+
 FlingBtn.MouseButton1Click:Connect(function()
     flingEnabled = not flingEnabled
     if flingEnabled then
@@ -552,7 +576,7 @@ SurfBtn.MouseButton1Click:Connect(function()
             SurfBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
             hum.Sit = true
         else
-            SurfBtn.Text = "🚗 Görünmez Sörf Modu: Kapalı"
+            SurfBtn.Text = "🚗 Görünmez Araba / Sörf Modu: Kapalı"
             SurfBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
             hum.Sit = false
         end
@@ -753,7 +777,7 @@ AutoChatBtn.MouseButton1Click:Connect(function()
                 task.wait(3)
                 pcall(function()
                     if textService.ChatInputBarConfiguration and textService.ChatInputBarConfiguration.TargetTextChannel then
-                        textService.ChatInputBarConfiguration.TargetTextChannel:SendAsync("⚡ Süper Kontrol Paneli v10 Aktif!")
+                        textService.ChatInputBarConfiguration.TargetTextChannel:SendAsync("⚡ Süper Kontrol Paneli v12 Aktif!")
                     end
                 end)
             end
