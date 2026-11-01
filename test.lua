@@ -1,4 +1,4 @@
--- Süper Kontrol Paneli v13.5 (Ultimate God Mode + Squid Game Bypass Tam Sürüm)
+-- Süper Kontrol Paneli v14 (Yeşil/Kırmızı Işık + Cam Köprü + Tüm Özellikler)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -19,6 +19,7 @@ end
 local isAirWalking = false
 local floatGroundEnabled = false
 local ghostGroundEnabled = false
+local redLightMode = false -- Kırmızı Işık Hile Koruma Bypass Modu
 local turboEnabled = false
 local turboMultiplier = 2.5
 local customSpeed = 16
@@ -52,6 +53,7 @@ local airPlatform = nil
 local airWalkConnection = nil
 local floatGroundConnection = nil
 local ghostGroundConnection = nil
+local redLightConnection = nil
 local noclipConnection = nil
 local flingConnection = nil
 local rgbConnection = nil
@@ -94,7 +96,7 @@ Title.BackgroundColor3 = Color3.fromRGB(28, 28, 38)
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 14
 Title.Font = Enum.Font.GothamBold
-Title.Text = "⚡ Süper Kontrol Paneli v13.5 (Ultimate)"
+Title.Text = "⚡ Süper Kontrol Paneli v14 (Red/Green Light)"
 Title.Parent = MainFrame
 
 Instance.new("UICorner", Title).CornerRadius = UDim.new(0, 14)
@@ -135,18 +137,19 @@ local function CreateMenuButton(order, text, color)
     return btn
 end
 
--- TÜM MENÜ ELEMANLARI (Sırasıyla Eksiksiz)
-local SafeBridgeBtn = CreateMenuButton(1, "🦑 Squid Game: Güvenli Cam Tarayıcı: Kapalı", Color3.fromRGB(40, 140, 90))
-local FastFinishBtn = CreateMenuButton(2, "🏁 Squid Game: Köprüyü Güvenli Adımlarla Geç", Color3.fromRGB(200, 50, 50))
-local FloatGroundBtn = CreateMenuButton(3, "🪐 Float Ground (Sunucu Yerde Sansın, Değme): Kapalı", Color3.fromRGB(100, 140, 200))
-local GhostGroundBtn = CreateMenuButton(4, "👻 Hayalet Zemin (Yürü/Zıpla ama Havada Say): Kapalı", Color3.fromRGB(200, 100, 50))
-local ToggleAirWalkBtn = CreateMenuButton(5, "👟 Havada Yürüme (AirWalk): Kapalı", Color3.fromRGB(200, 50, 50))
-local TurboBtn = CreateMenuButton(6, "🔥 Turbo Hız (Sol Shift): Kapalı", Color3.fromRGB(50, 50, 65))
-local NoclipBtn = CreateMenuButton(7, "👻 Noclip (Duvar Geçme): Kapalı", Color3.fromRGB(140, 50, 50))
+-- TÜM MENÜ ELEMANLARI (Yeşil/Kırmızı Işık + Cam Köprü En Başa Eklendi)
+local RedLightBtn = CreateMenuButton(1, "🛑 Kırmızı Işık (Hareket Sabitleyici): Kapalı", Color3.fromRGB(180, 50, 50))
+local SafeBridgeBtn = CreateMenuButton(2, "🦑 Squid Game: Güvenli Cam Tarayıcı: Kapalı", Color3.fromRGB(40, 140, 90))
+local FastFinishBtn = CreateMenuButton(3, "🏁 Squid Game: Köprüyü Güvenli Adımlarla Geç", Color3.fromRGB(200, 50, 50))
+local FloatGroundBtn = CreateMenuButton(4, "🪐 Float Ground (Sunucu Yerde Sansın, Değme): Kapalı", Color3.fromRGB(100, 140, 200))
+local GhostGroundBtn = CreateMenuButton(5, "👻 Hayalet Zemin (Yürü/Zıpla ama Havada Say): Kapalı", Color3.fromRGB(200, 100, 50))
+local ToggleAirWalkBtn = CreateMenuButton(6, "👟 Havada Yürüme (AirWalk): Kapalı", Color3.fromRGB(200, 50, 50))
+local TurboBtn = CreateMenuButton(7, "🔥 Turbo Hız (Sol Shift): Kapalı", Color3.fromRGB(50, 50, 65))
+local NoclipBtn = CreateMenuButton(8, "👻 Noclip (Duvar Geçme): Kapalı", Color3.fromRGB(140, 50, 50))
 
 -- Hız Ayar Satırı
 local SpeedRow = Instance.new("Frame")
-SpeedRow.LayoutOrder = 8
+SpeedRow.LayoutOrder = 9
 SpeedRow.Size = UDim2.new(0.94, 0, 0, 64)
 SpeedRow.BackgroundColor3 = Color3.fromRGB(30, 38, 35)
 SpeedRow.Parent = ScrollFrame
@@ -195,33 +198,33 @@ IncSpeedBtn.Parent = SpeedRow
 Instance.new("UICorner", IncSpeedBtn).CornerRadius = UDim.new(0, 6)
 
 -- Tüm Diğer Özellik Butonları
-local SpawnEggBtn = CreateMenuButton(9, "🥚 Olduğun Yere 'Pet Egg/Chest' Spawnla", Color3.fromRGB(180, 100, 20))
-local PetArmyBtn = CreateMenuButton(10, "🐾 Pet Takip Ordusu (Pet Swarm): Kapalı", Color3.fromRGB(50, 50, 65))
-local AutoFarmBtn = CreateMenuButton(11, "⚡ Otomatik Farm / Coin Kırıcı: Kapalı", Color3.fromRGB(40, 140, 90))
-local MaxPetsBtn = CreateMenuButton(12, "✨ Petleri Rainbow / Max Yap (Visual)", Color3.fromRGB(200, 140, 20))
-local TouchTpBtn = CreateMenuButton(13, "⚡ Dokunduğun Yere TP: Kapalı", Color3.fromRGB(50, 50, 65))
-local GiveTpToolBtn = CreateMenuButton(14, "🎒 Envantere 'TP Eşyası' Ver", Color3.fromRGB(85, 60, 150))
-local FlingBtn = CreateMenuButton(15, "🌪️ Kasırga / Fling Modu: Kapalı", Color3.fromRGB(50, 50, 65))
-local MoonGravBtn = CreateMenuButton(16, "🪐 Ay Yerçekimi (Moon): Kapalı", Color3.fromRGB(50, 50, 65))
-local PulseBtn = CreateMenuButton(17, "💥 Yerçekimi Patlaması (Pulse At)", Color3.fromRGB(180, 50, 50))
-local GrappleBtn = CreateMenuButton(18, "🕸️ Örümcek Adam Kancası Ver", Color3.fromRGB(85, 60, 150))
-local SurfBtn = CreateMenuButton(19, "🚗 Görünmez Sörf Modu: Kapalı", Color3.fromRGB(50, 50, 65))
-local BridgeBtn = CreateMenuButton(20, "🧱 Insta-Bridge (Altına Köprü Ör): Kapalı", Color3.fromRGB(50, 50, 65))
-local GiantBtn = CreateMenuButton(21, "🧍 Dev Adam Modu (Boyut Büyüt)", Color3.fromRGB(100, 50, 150))
-local MiniBtn = CreateMenuButton(22, "👶 Cüce Modu (Boyut Küçült)", Color3.fromRGB(100, 50, 150))
-local XRayBtn = CreateMenuButton(23, "👁️ X-Ray (Duvarları Şeffaf Yap): Kapalı", Color3.fromRGB(50, 50, 65))
-local RgbBtn = CreateMenuButton(24, "🌈 RGB Neon Karakter: Kapalı", Color3.fromRGB(50, 50, 65))
-local RgbSkyBtn = CreateMenuButton(25, "🎨 Gökkuşağı Gökyüzü (RGB Sky): Kapalı", Color3.fromRGB(50, 50, 65))
-local TrailBtn = CreateMenuButton(26, "👥 Hayalet Kopya İzi (Ghost Trail): Kapalı", Color3.fromRGB(50, 50, 65))
-local FullbrightBtn = CreateMenuButton(27, "☀️ Fullbright (Gece Görüşü): Kapalı", Color3.fromRGB(50, 50, 65))
-local TimeFreezeBtn = CreateMenuButton(28, "⏰ Dünya Zamanını Dondur: Kapalı", Color3.fromRGB(50, 50, 65))
-local FreecamBtn = CreateMenuButton(29, "👻 Hayalet Kamera (Freecam): Kapalı", Color3.fromRGB(50, 50, 65))
-local AutoPromptBtn = CreateMenuButton(30, "⚡ Otomatik Etkileşim (Auto-Prompt): Kapalı", Color3.fromRGB(50, 50, 65))
-local AutoChatBtn = CreateMenuButton(31, "💬 Otomatik Sohbet Spammer: Kapalı", Color3.fromRGB(50, 50, 65))
-local TeleportPlayerBtn = CreateMenuButton(32, "🎯 Rastgele Oyuncuya Işınlan", Color3.fromRGB(150, 80, 50))
-local InfMoneyBtn = CreateMenuButton(33, "💸 Sınırsız Para / Coin Bas (999M)", Color3.fromRGB(200, 140, 20))
-local InfJumpBtn = CreateMenuButton(34, "🚀 Havada Sınırsız Zıplama: Kapalı", Color3.fromRGB(50, 50, 65))
-local MagnetBtn = CreateMenuButton(35, "🧲 Eşya / Coin Mıknatısı: Kapalı", Color3.fromRGB(50, 50, 65))
+local SpawnEggBtn = CreateMenuButton(10, "🥚 Olduğun Yere 'Pet Egg/Chest' Spawnla", Color3.fromRGB(180, 100, 20))
+local PetArmyBtn = CreateMenuButton(11, "🐾 Pet Takip Ordusu (Pet Swarm): Kapalı", Color3.fromRGB(50, 50, 65))
+local AutoFarmBtn = CreateMenuButton(12, "⚡ Otomatik Farm / Coin Kırıcı: Kapalı", Color3.fromRGB(40, 140, 90))
+local MaxPetsBtn = CreateMenuButton(13, "✨ Petleri Rainbow / Max Yap (Visual)", Color3.fromRGB(200, 140, 20))
+local TouchTpBtn = CreateMenuButton(14, "⚡ Dokunduğun Yere TP: Kapalı", Color3.fromRGB(50, 50, 65))
+local GiveTpToolBtn = CreateMenuButton(15, "🎒 Envantere 'TP Eşyası' Ver", Color3.fromRGB(85, 60, 150))
+local FlingBtn = CreateMenuButton(16, "🌪️ Kasırga / Fling Modu: Kapalı", Color3.fromRGB(50, 50, 65))
+local MoonGravBtn = CreateMenuButton(17, "🪐 Ay Yerçekimi (Moon): Kapalı", Color3.fromRGB(50, 50, 65))
+local PulseBtn = CreateMenuButton(18, "💥 Yerçekimi Patlaması (Pulse At)", Color3.fromRGB(180, 50, 50))
+local GrappleBtn = CreateMenuButton(19, "🕸️ Örümcek Adam Kancası Ver", Color3.fromRGB(85, 60, 150))
+local SurfBtn = CreateMenuButton(20, "🚗 Görünmez Sörf Modu: Kapalı", Color3.fromRGB(50, 50, 65))
+local BridgeBtn = CreateMenuButton(21, "🧱 Insta-Bridge (Altına Köprü Ör): Kapalı", Color3.fromRGB(50, 50, 65))
+local GiantBtn = CreateMenuButton(22, "🧍 Dev Adam Modu (Boyut Büyüt)", Color3.fromRGB(100, 50, 150))
+local MiniBtn = CreateMenuButton(23, "👶 Cüce Modu (Boyut Küçült)", Color3.fromRGB(100, 50, 150))
+local XRayBtn = CreateMenuButton(24, "👁️ X-Ray (Duvarları Şeffaf Yap): Kapalı", Color3.fromRGB(50, 50, 65))
+local RgbBtn = CreateMenuButton(25, "🌈 RGB Neon Karakter: Kapalı", Color3.fromRGB(50, 50, 65))
+local RgbSkyBtn = CreateMenuButton(26, "🎨 Gökkuşağı Gökyüzü (RGB Sky): Kapalı", Color3.fromRGB(50, 50, 65))
+local TrailBtn = CreateMenuButton(27, "👥 Hayalet Kopya İzi (Ghost Trail): Kapalı", Color3.fromRGB(50, 50, 65))
+local FullbrightBtn = CreateMenuButton(28, "☀️ Fullbright (Gece Görüşü): Kapalı", Color3.fromRGB(50, 50, 65))
+local TimeFreezeBtn = CreateMenuButton(29, "⏰ Dünya Zamanını Dondur: Kapalı", Color3.fromRGB(50, 50, 65))
+local FreecamBtn = CreateMenuButton(30, "👻 Hayalet Kamera (Freecam): Kapalı", Color3.fromRGB(50, 50, 65))
+local AutoPromptBtn = CreateMenuButton(31, "⚡ Otomatik Etkileşim (Auto-Prompt): Kapalı", Color3.fromRGB(50, 50, 65))
+local AutoChatBtn = CreateMenuButton(32, "💬 Otomatik Sohbet Spammer: Kapalı", Color3.fromRGB(50, 50, 65))
+local TeleportPlayerBtn = CreateMenuButton(33, "🎯 Rastgele Oyuncuya Işınlan", Color3.fromRGB(150, 80, 50))
+local InfMoneyBtn = CreateMenuButton(34, "💸 Sınırsız Para / Coin Bas (999M)", Color3.fromRGB(200, 140, 20))
+local InfJumpBtn = CreateMenuButton(35, "🚀 Havada Sınırsız Zıplama: Kapalı", Color3.fromRGB(50, 50, 65))
+local MagnetBtn = CreateMenuButton(36, "🧲 Eşya / Coin Mıknatısı: Kapalı", Color3.fromRGB(50, 50, 65))
 
 ---------------------------------------------------------------------
 -- HIZ VE TEMEL FONKSİYONLAR
@@ -258,6 +261,14 @@ RunService.Heartbeat:Connect(function(dt)
     local hum = char:FindFirstChildOfClass("Humanoid")
     if not rootPart or not hum then return end
 
+    -- Eğer Kırmızı Işık modu aktifse ve oyuncu klavyeden tuşa basmıyorsa hızı tamamen sıfırla
+    if redLightMode then
+        if hum.MoveDirection.Magnitude == 0 then
+            rootPart.AssemblyLinearVelocity = Vector3.new(0, rootPart.AssemblyLinearVelocity.Y, 0)
+        end
+        return
+    end
+
     local activeSpeed = customSpeed
     if turboEnabled or UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
         activeSpeed = customSpeed * turboMultiplier
@@ -272,7 +283,34 @@ RunService.Heartbeat:Connect(function(dt)
 end)
 
 ---------------------------------------------------------------------
--- SQUID GAME ÖZEL BYPASS MEKANİKLERİ
+-- YENİ: KIRMIZI IŞIK (RED LIGHT) KORUMA MODU
+---------------------------------------------------------------------
+RedLightBtn.MouseButton1Click:Connect(function()
+    redLightMode = not redLightMode
+    if redLightMode then
+        RedLightBtn.Text = "🛑 Kırmızı Işık (Kilitli Durum): Açık"
+        RedLightBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
+        
+        redLightConnection = RunService.Heartbeat:Connect(function()
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                local hrp = char.HumanoidRootPart
+                -- Kırmızı ışık anında karakterin kaymasını engellemek için hızı tamamen dondurur
+                hrp.AssemblyLinearVelocity = Vector3.new(0, hrp.AssemblyLinearVelocity.Y, 0)
+            end
+        end)
+    else
+        RedLightBtn.Text = "🛑 Kırmızı Işık (Hareket Sabitleyici): Kapalı"
+        RedLightBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+        if redLightConnection then
+            redLightConnection:Disconnect()
+            redLightConnection = nil
+        end
+    end
+end)
+
+---------------------------------------------------------------------
+-- SQUID GAME CAM KÖPRÜ BYPASS
 ---------------------------------------------------------------------
 
 SafeBridgeBtn.MouseButton1Click:Connect(function()
@@ -374,7 +412,7 @@ local function StartAirWalk()
     local character = LocalPlayer.Character
     if not character then return end
     local rootPart = character:FindFirstChild("HumanoidRootPart")
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    local humanoid = character:FindFirstChild("Humanoid")
     if not rootPart or not humanoid then return end
 
     isAirWalking = true
@@ -461,7 +499,7 @@ NoclipBtn.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------------------
--- DİĞER TÜM ÖZELLİKLER VE EĞLENCE MODLARI
+-- DİĞER TÜM ÖZELLİKLER
 ---------------------------------------------------------------------
 
 SpawnEggBtn.MouseButton1Click:Connect(function()
@@ -840,7 +878,7 @@ AutoChatBtn.MouseButton1Click:Connect(function()
                 task.wait(3)
                 pcall(function()
                     if textService.ChatInputBarConfiguration and textService.ChatInputBarConfiguration.TargetTextChannel then
-                        textService.ChatInputBarConfiguration.TargetTextChannel:SendAsync("⚡ Süper Kontrol Paneli v13.5 Aktif!")
+                        textService.ChatInputBarConfiguration.TargetTextChannel:SendAsync("⚡ Süper Kontrol Paneli v14 Aktif!")
                     end
                 end)
             end
