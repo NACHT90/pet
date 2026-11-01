@@ -1,4 +1,4 @@
--- Süper Kontrol Paneli v14 (Yeşil/Kırmızı Işık + Cam Köprü + Tüm Özellikler)
+-- Süper Kontrol Paneli v15 (Kırmızı Işık Sert Sabitleme + Tüm Modlar)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -8,7 +8,7 @@ local Lighting = game:GetService("Lighting")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- Eski menülerin hepsini temizle
+-- Eski menüleri temizle
 for _, guiName in pairs({"TestArayuzGui", "UcusArayuzGui", "SuperKontrolGui"}) do
     if PlayerGui:FindFirstChild(guiName) then
         PlayerGui[guiName]:Destroy()
@@ -19,7 +19,7 @@ end
 local isAirWalking = false
 local floatGroundEnabled = false
 local ghostGroundEnabled = false
-local redLightMode = false -- Kırmızı Işık Hile Koruma Bypass Modu
+local redLightMode = false
 local turboEnabled = false
 local turboMultiplier = 2.5
 local customSpeed = 16
@@ -47,7 +47,6 @@ local autoChatEnabled = false
 local autoFarmEnabled = false
 local petArmyEnabled = false
 local safeBridgeMode = false
-local microWalkEnabled = false
 
 local airPlatform = nil
 local airWalkConnection = nil
@@ -96,7 +95,7 @@ Title.BackgroundColor3 = Color3.fromRGB(28, 28, 38)
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 14
 Title.Font = Enum.Font.GothamBold
-Title.Text = "⚡ Süper Kontrol Paneli v14 (Red/Green Light)"
+Title.Text = "⚡ Süper Kontrol Paneli v15 (Red Light Hard-Fix)"
 Title.Parent = MainFrame
 
 Instance.new("UICorner", Title).CornerRadius = UDim.new(0, 14)
@@ -116,12 +115,10 @@ ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 ListLayout.Padding = UDim.new(0, 8)
 ListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
--- Otomatik Boyutlandırma
 ListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y + 15)
 end)
 
--- Otomatik Buton Oluşturucu
 local function CreateMenuButton(order, text, color)
     local btn = Instance.new("TextButton")
     btn.LayoutOrder = order
@@ -137,8 +134,8 @@ local function CreateMenuButton(order, text, color)
     return btn
 end
 
--- TÜM MENÜ ELEMANLARI (Yeşil/Kırmızı Işık + Cam Köprü En Başa Eklendi)
-local RedLightBtn = CreateMenuButton(1, "🛑 Kırmızı Işık (Hareket Sabitleyici): Kapalı", Color3.fromRGB(180, 50, 50))
+-- MENÜ ELEMANLARI
+local RedLightBtn = CreateMenuButton(1, "🛑 Kırmızı Işık (Sert Sabitleme / Hard Anchor): Kapalı", Color3.fromRGB(180, 50, 50))
 local SafeBridgeBtn = CreateMenuButton(2, "🦑 Squid Game: Güvenli Cam Tarayıcı: Kapalı", Color3.fromRGB(40, 140, 90))
 local FastFinishBtn = CreateMenuButton(3, "🏁 Squid Game: Köprüyü Güvenli Adımlarla Geç", Color3.fromRGB(200, 50, 50))
 local FloatGroundBtn = CreateMenuButton(4, "🪐 Float Ground (Sunucu Yerde Sansın, Değme): Kapalı", Color3.fromRGB(100, 140, 200))
@@ -197,7 +194,7 @@ IncSpeedBtn.Text = "+ 10"
 IncSpeedBtn.Parent = SpeedRow
 Instance.new("UICorner", IncSpeedBtn).CornerRadius = UDim.new(0, 6)
 
--- Tüm Diğer Özellik Butonları
+-- Diğer Butonlar
 local SpawnEggBtn = CreateMenuButton(10, "🥚 Olduğun Yere 'Pet Egg/Chest' Spawnla", Color3.fromRGB(180, 100, 20))
 local PetArmyBtn = CreateMenuButton(11, "🐾 Pet Takip Ordusu (Pet Swarm): Kapalı", Color3.fromRGB(50, 50, 65))
 local AutoFarmBtn = CreateMenuButton(12, "⚡ Otomatik Farm / Coin Kırıcı: Kapalı", Color3.fromRGB(40, 140, 90))
@@ -227,7 +224,7 @@ local InfJumpBtn = CreateMenuButton(35, "🚀 Havada Sınırsız Zıplama: Kapal
 local MagnetBtn = CreateMenuButton(36, "🧲 Eşya / Coin Mıknatısı: Kapalı", Color3.fromRGB(50, 50, 65))
 
 ---------------------------------------------------------------------
--- HIZ VE TEMEL FONKSİYONLAR
+-- HIZ VE HAREKET MOTORU
 ---------------------------------------------------------------------
 
 local function UpdateSpeedUI()
@@ -261,11 +258,8 @@ RunService.Heartbeat:Connect(function(dt)
     local hum = char:FindFirstChildOfClass("Humanoid")
     if not rootPart or not hum then return end
 
-    -- Eğer Kırmızı Işık modu aktifse ve oyuncu klavyeden tuşa basmıyorsa hızı tamamen sıfırla
+    -- Eğer Kırmızı Işık modu açıksa hareketi tamamen bloke et
     if redLightMode then
-        if hum.MoveDirection.Magnitude == 0 then
-            rootPart.AssemblyLinearVelocity = Vector3.new(0, rootPart.AssemblyLinearVelocity.Y, 0)
-        end
         return
     end
 
@@ -283,36 +277,40 @@ RunService.Heartbeat:Connect(function(dt)
 end)
 
 ---------------------------------------------------------------------
--- YENİ: KIRMIZI IŞIK (RED LIGHT) KORUMA MODU
+-- KIRMIZI IŞIK SERT SABİTLEME (HARD ANCHOR)
 ---------------------------------------------------------------------
 RedLightBtn.MouseButton1Click:Connect(function()
     redLightMode = not redLightMode
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local hrp = char.HumanoidRootPart
+
     if redLightMode then
-        RedLightBtn.Text = "🛑 Kırmızı Işık (Kilitli Durum): Açık"
+        RedLightBtn.Text = "🛑 Kırmızı Işık (Sabitlendi / Güvende): Açık"
         RedLightBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 90)
         
-        redLightConnection = RunService.Heartbeat:Connect(function()
-            local char = LocalPlayer.Character
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                local hrp = char.HumanoidRootPart
-                -- Kırmızı ışık anında karakterin kaymasını engellemek için hızı tamamen dondurur
-                hrp.AssemblyLinearVelocity = Vector3.new(0, hrp.AssemblyLinearVelocity.Y, 0)
+        -- Karakterin parçalarını tamamen sabitle (Sunucu asla hareket algılayamaz)
+        for _, part in pairs(char:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Anchored = true
             end
-        end)
+        end
     else
-        RedLightBtn.Text = "🛑 Kırmızı Işık (Hareket Sabitleyici): Kapalı"
+        RedLightBtn.Text = "🛑 Kırmızı Işık (Sert Sabitleme / Hard Anchor): Kapalı"
         RedLightBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
-        if redLightConnection then
-            redLightConnection:Disconnect()
-            redLightConnection = nil
+        
+        -- Sabitlemeyi kaldırıp serbest bırak
+        for _, part in pairs(char:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Anchored = false
+            end
         end
     end
 end)
 
 ---------------------------------------------------------------------
--- SQUID GAME CAM KÖPRÜ BYPASS
+-- SQUID GAME CAM KÖPRÜ
 ---------------------------------------------------------------------
-
 SafeBridgeBtn.MouseButton1Click:Connect(function()
     safeBridgeMode = not safeBridgeMode
     SafeBridgeBtn.Text = safeBridgeMode and "🦑 Cam Tarayıcı: Açık" or "🦑 Squid Game: Güvenli Cam Tarayıcı: Kapalı"
@@ -352,7 +350,6 @@ end)
 ---------------------------------------------------------------------
 -- FLOAT GROUND VE GHOST GROUND
 ---------------------------------------------------------------------
-
 FloatGroundBtn.MouseButton1Click:Connect(function()
     floatGroundEnabled = not floatGroundEnabled
     if floatGroundEnabled then
@@ -396,9 +393,8 @@ GhostGroundBtn.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------------------
--- HAVADA YÜRÜME (AIR WALK)
+-- DİĞER MODLAR (AIRWALK, NOCLIP, PET, VS.)
 ---------------------------------------------------------------------
-
 local function StopAirWalk()
     isAirWalking = false
     ToggleAirWalkBtn.Text = "👟 Havada Yürüme (AirWalk): Kapalı"
@@ -498,10 +494,7 @@ NoclipBtn.MouseButton1Click:Connect(function()
     end
 end)
 
----------------------------------------------------------------------
--- DİĞER TÜM ÖZELLİKLER
----------------------------------------------------------------------
-
+-- Diğer yardımcı butonlar
 SpawnEggBtn.MouseButton1Click:Connect(function()
     local char = LocalPlayer.Character
     if char and char:FindFirstChild("HumanoidRootPart") then
@@ -878,7 +871,7 @@ AutoChatBtn.MouseButton1Click:Connect(function()
                 task.wait(3)
                 pcall(function()
                     if textService.ChatInputBarConfiguration and textService.ChatInputBarConfiguration.TargetTextChannel then
-                        textService.ChatInputBarConfiguration.TargetTextChannel:SendAsync("⚡ Süper Kontrol Paneli v14 Aktif!")
+                        textService.ChatInputBarConfiguration.TargetTextChannel:SendAsync("⚡ Süper Kontrol Paneli v15 Aktif!")
                     end
                 end)
             end
